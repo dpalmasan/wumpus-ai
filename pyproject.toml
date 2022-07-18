@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "wumpus-ai"
+version = "0.1.0"
+description = "Demo with graphical interface"
+authors = ["Diego Palma <dpalmasan@gmail.com>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "^3.8"
+pygame = "^2.1.2"
+
+[tool.poetry.dev-dependencies]
+black = "^22.6.0"
+flake8 = "^4.0.1"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

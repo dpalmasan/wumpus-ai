@@ -28,10 +28,26 @@ OFFSET = BLOCK_SIZE // 3
 IMAGES_WIDTH = BLOCK_SIZE // 3
 IMAGES_HEIGHT = BLOCK_SIZE // 3
 
-breeze = pygame.transform.scale(pygame.image.load("breeze.png"), (IMAGES_WIDTH, IMAGES_HEIGHT))
-stench = pygame.transform.scale(pygame.image.load("stench.png"), (IMAGES_WIDTH, IMAGES_HEIGHT))
+breeze = pygame.transform.scale(
+    pygame.image.load("breeze.png"), (IMAGES_WIDTH, IMAGES_HEIGHT)
+)
+stench = pygame.transform.scale(
+    pygame.image.load("stench.png"), (IMAGES_WIDTH, IMAGES_HEIGHT)
+)
+wumpus = pygame.transform.scale(
+    pygame.image.load("bear.png"), (IMAGES_WIDTH, IMAGES_HEIGHT)
+)
+gold = pygame.transform.scale(
+    pygame.image.load("gold.png"), (IMAGES_WIDTH, IMAGES_HEIGHT)
+)
 
-properties = [Property.BREEZE, Property.STENCH]
+properties = [
+    Property.BREEZE,
+    Property.STENCH,
+    Property.WUMPUS,
+    Property.GOLD,
+    Property.PIT,
+]
 
 
 class Map:
@@ -50,7 +66,12 @@ class Map:
 
 
 class Tile:
-    def __init__(self, pos: Position, properties: List[Property] = [], size=(BLOCK_SIZE, BLOCK_SIZE)):
+    def __init__(
+        self,
+        pos: Position,
+        properties: List[Property] = [],
+        size=(BLOCK_SIZE, BLOCK_SIZE),
+    ):
         self._properties = properties
         self._size = size
         self._pos = pos
@@ -58,6 +79,9 @@ class Tile:
         self._rect = pygame.Rect(pos.x, pos.y, *size)
 
     def draw(self, canvas: pygame.Surface) -> None:
+        if Property.PIT in self._properties:
+            pygame.draw.circle(canvas, BLACK, self._rect.center, BLOCK_SIZE // 3)
+
         if Property.BREEZE in self._properties:
             rect = breeze.get_rect()
             rect.center = (self._rect.center[0] - OFFSET, self._rect.center[1] - OFFSET)
@@ -67,7 +91,17 @@ class Tile:
             rect = stench.get_rect()
             rect.center = (self._rect.center[0], self._rect.center[1] - OFFSET)
             canvas.blit(stench, rect)
-        
+
+        if Property.WUMPUS in self._properties:
+            rect = wumpus.get_rect()
+            rect.center = (self._rect.center[0], self._rect.center[1])
+            canvas.blit(wumpus, rect)
+
+        if Property.GOLD in self._properties:
+            rect = gold.get_rect()
+            rect.center = (self._rect.center[0], self._rect.center[1] + OFFSET)
+            canvas.blit(gold, rect)
+
         pygame.draw.rect(canvas, BLACK, self._rect, 1)
 
 
@@ -87,5 +121,6 @@ def main():
                 sys.exit()
 
         pygame.display.update()
+
 
 main()

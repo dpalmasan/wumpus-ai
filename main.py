@@ -1,7 +1,7 @@
 import sys
 import pygame
 from enum import Enum
-from typing import List
+from typing import Dict, Iterable, List, Tuple
 from dataclasses import dataclass
 
 
@@ -22,8 +22,10 @@ class Position:
 BLACK = (0, 0, 0)
 WHITE = (200, 200, 200)
 BLOCK_SIZE = 128
-WINDOW_HEIGHT = BLOCK_SIZE * 6
-WINDOW_WIDTH = BLOCK_SIZE * 6
+X_TILE_COUNT = 4
+Y_TILE_COUNT = 4
+WINDOW_HEIGHT = BLOCK_SIZE * X_TILE_COUNT
+WINDOW_WIDTH = BLOCK_SIZE * Y_TILE_COUNT
 OFFSET = BLOCK_SIZE // 3
 IMAGES_WIDTH = BLOCK_SIZE // 3
 IMAGES_HEIGHT = BLOCK_SIZE // 3
@@ -50,26 +52,11 @@ properties = [
 ]
 
 
-class Map:
-    def __init__(self, block_size: int):
-        self._block_size = block_size
-
-    @property
-    def block_size(self):
-        return self._block_size
-
-    def draw(self, canvas: pygame.Surface):
-        for x in range(0, WINDOW_WIDTH, self.block_size):
-            for y in range(0, WINDOW_HEIGHT, self.block_size):
-                tile = Tile(Position(x, y), properties)
-                tile.draw(canvas)
-
-
 class Tile:
     def __init__(
         self,
         pos: Position,
-        properties: List[Property] = [],
+        properties: Iterable[Property] = [],
         size=(BLOCK_SIZE, BLOCK_SIZE),
     ):
         self._properties = properties
@@ -105,6 +92,25 @@ class Tile:
         pygame.draw.rect(canvas, BLACK, self._rect, 1)
 
 
+class Map:
+    def __init__(self, tiles: Dict[Tuple[int, int], Tile]):
+        self.tiles = tiles
+
+    def draw(self, canvas: pygame.Surface):
+        for _, tile in self.tiles.items():
+            tile.draw(canvas)
+
+    @classmethod
+    def from_list(cls, grid: List[List[Iterable[Property]]]) -> "Map":
+        tiles = {}
+        #  For now we limit size to 6
+        for j, x in zip(range(X_TILE_COUNT), range(0, WINDOW_WIDTH, BLOCK_SIZE)):
+            for i, y in zip(range(Y_TILE_COUNT), range(0, WINDOW_HEIGHT, BLOCK_SIZE)):
+                tiles[(x, y)] = Tile(Position(x, y), grid[i][j])
+
+        return cls(tiles)
+
+
 def main():
     pygame.init()
     SCREEN = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
@@ -112,8 +118,20 @@ def main():
     SCREEN.fill(WHITE)
     breeze.convert()
 
+    tiles = [
+        [(Property.STENCH,), [], (Property.BREEZE,), (Property.PIT,)],
+        [
+            (Property.WUMPUS,),
+            (Property.BREEZE, Property.STENCH, Property.GOLD),
+            (Property.PIT,),
+            (Property.BREEZE,),
+        ],
+        [(Property.STENCH,), [], (Property.BREEZE,), []],
+        [[], (Property.BREEZE,), (Property.PIT,), (Property.BREEZE,)],
+    ]
+
+    map = Map.from_list(tiles)
     while True:
-        map = Map(BLOCK_SIZE)
         map.draw(SCREEN)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:

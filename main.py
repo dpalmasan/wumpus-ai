@@ -1,9 +1,9 @@
-from abc import ABC, abstractmethod
 import sys
 import pygame
 from enum import Enum
 from typing import List
 from dataclasses import dataclass
+
 
 class Property(Enum):
     BREEZE = 0
@@ -12,17 +12,43 @@ class Property(Enum):
     PIT = 3
     WUMPUS = 4
 
+
 @dataclass
 class Position:
     x: int
     y: int
 
+
 BLACK = (0, 0, 0)
 WHITE = (200, 200, 200)
-WINDOW_HEIGHT = 64*6
-WINDOW_WIDTH = 64*6
+BLOCK_SIZE = 128
+WINDOW_HEIGHT = BLOCK_SIZE * 6
+WINDOW_WIDTH = BLOCK_SIZE * 6
+OFFSET = BLOCK_SIZE // 3
+IMAGES_WIDTH = BLOCK_SIZE // 3
+IMAGES_HEIGHT = BLOCK_SIZE // 3
 
-breeze = pygame.transform.scale(pygame.image.load('breeze.png'), (21, 21))
+breeze = pygame.transform.scale(
+    pygame.image.load("breeze.png"), (IMAGES_WIDTH, IMAGES_HEIGHT)
+)
+stench = pygame.transform.scale(
+    pygame.image.load("stench.png"), (IMAGES_WIDTH, IMAGES_HEIGHT)
+)
+wumpus = pygame.transform.scale(
+    pygame.image.load("bear.png"), (IMAGES_WIDTH, IMAGES_HEIGHT)
+)
+gold = pygame.transform.scale(
+    pygame.image.load("gold.png"), (IMAGES_WIDTH, IMAGES_HEIGHT)
+)
+
+properties = [
+    Property.BREEZE,
+    Property.STENCH,
+    Property.WUMPUS,
+    Property.GOLD,
+    Property.PIT,
+]
+
 
 class Map:
     def __init__(self, block_size: int):
@@ -32,30 +58,54 @@ class Map:
     def block_size(self):
         return self._block_size
 
-    def draw(self):
-        blockSize = 64
-        for x in range(0, WINDOW_WIDTH, blockSize):
-            for y in range(0, WINDOW_HEIGHT, blockSize):
-                tile = Tile(Position(x, y))
-                tile.draw(SCREEN)
+    def draw(self, canvas: pygame.Surface):
+        for x in range(0, WINDOW_WIDTH, self.block_size):
+            for y in range(0, WINDOW_HEIGHT, self.block_size):
+                tile = Tile(Position(x, y), properties)
+                tile.draw(canvas)
 
 
 class Tile:
-    def __init__(self, pos: Position, properties: List[Property] = [] , size =(64, 64)):
+    def __init__(
+        self,
+        pos: Position,
+        properties: List[Property] = [],
+        size=(BLOCK_SIZE, BLOCK_SIZE),
+    ):
         self._properties = properties
         self._size = size
         self._pos = pos
         self._surface = pygame.Surface(size)
         self._rect = pygame.Rect(pos.x, pos.y, *size)
 
-
     def draw(self, canvas: pygame.Surface) -> None:
-        canvas.blit(breeze, self._rect)
+        if Property.PIT in self._properties:
+            pygame.draw.circle(canvas, BLACK, self._rect.center, BLOCK_SIZE // 3)
+
+        if Property.BREEZE in self._properties:
+            rect = breeze.get_rect()
+            rect.center = (self._rect.center[0] - OFFSET, self._rect.center[1] - OFFSET)
+            canvas.blit(breeze, rect)
+
+        if Property.STENCH in self._properties:
+            rect = stench.get_rect()
+            rect.center = (self._rect.center[0], self._rect.center[1] - OFFSET)
+            canvas.blit(stench, rect)
+
+        if Property.WUMPUS in self._properties:
+            rect = wumpus.get_rect()
+            rect.center = (self._rect.center[0], self._rect.center[1])
+            canvas.blit(wumpus, rect)
+
+        if Property.GOLD in self._properties:
+            rect = gold.get_rect()
+            rect.center = (self._rect.center[0], self._rect.center[1] + OFFSET)
+            canvas.blit(gold, rect)
+
         pygame.draw.rect(canvas, BLACK, self._rect, 1)
 
 
 def main():
-    global SCREEN, CLOCK
     pygame.init()
     SCREEN = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
     CLOCK = pygame.time.Clock()
@@ -63,16 +113,14 @@ def main():
     breeze.convert()
 
     while True:
-        map = Map(50)
-        map.draw()
+        map = Map(BLOCK_SIZE)
+        map.draw(SCREEN)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
 
         pygame.display.update()
-
-
 
 
 main()

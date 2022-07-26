@@ -113,6 +113,21 @@ optional = false
 python-versions = ">=3.6"
 
 [[package]]
+name = "pylogic"
+version = "0.0.0"
+description = ""
+category = "main"
+optional = false
+python-versions = "*"
+develop = false
+
+[package.source]
+type = "git"
+url = "https://github.com/dpalmasan/py-logic.git"
+reference = "main"
+resolved_reference = "5e266c75c40d7810a8be2de2126f48219edc7e12"
+
+[[package]]
 name = "tomli"
 version = "2.0.1"
 description = "A lil' TOML parser"
@@ -131,7 +146,7 @@ python-versions = ">=3.7"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "0a44d3cbfc1a6b5046b5aaf88329f700240a510f4f0c67ca8c00cd1421537825"
+content-hash = "5f6f8b456e4d9b76a216ece4256493406c96106494dbee3dc9b9228e7396600d"
 
 [metadata.files]
 black = [
@@ -255,6 +270,7 @@ pygame = [
     {file = "pygame-2.1.2-pp37-pypy37_pp73-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:1fddec8829e96424800c806582d73a5173b7d48946cccf7d035839ca09850db8"},
     {file = "pygame-2.1.2.tar.gz", hash = "sha256:d6d0eca28f886f0477cd0721ac688189155a587f2bb8eae740e52ca56c3ad23c"},
 ]
+pylogic = []
 tomli = [
     {file = "tomli-2.0.1-py3-none-any.whl", hash = "sha256:939de3e7a6161af0c887ef91b7d41a53e7c5a1ca976325f429cb46ea9bc30ecc"},
     {file = "tomli-2.0.1.tar.gz", hash = "sha256:de526c12914f0c550d15924c62d72abc48d6fe7364aa87328337a31007fe8a4f"},

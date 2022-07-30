@@ -120,17 +120,3 @@ def a_star_route(
                 pq.push(child, child.cost + heuristic(problem, child))
 
     return solution
-
-
-visited = [
-    [True, True, True, True],
-    [True, True, True, True],
-    [True, True, True, True],
-    [True, True, True, True],
-]
-problem = ShortestPathSearchProblem(Position(1, 1), Position(2, 1), visited)
-start = problem.get_start_state()
-for children in problem.get_successors(start):
-    print(children.pos)
-
-print(a_star_route(problem))

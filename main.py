@@ -2,7 +2,7 @@ import sys
 import pygame
 from enum import Enum
 from typing import Dict, Iterable, List, Tuple
-from dataclasses import dataclass
+from utils import Position
 
 
 class Property(Enum):
@@ -11,12 +11,6 @@ class Property(Enum):
     GOLD = 2
     PIT = 3
     WUMPUS = 4
-
-
-@dataclass
-class Position:
-    x: int
-    y: int
 
 
 BLACK = (0, 0, 0)
@@ -94,10 +88,10 @@ class Tile:
 
 class Map:
     def __init__(self, tiles: Dict[Tuple[int, int], Tile]):
-        self.tiles = tiles
+        self._tiles = tiles
 
     def draw(self, canvas: pygame.Surface):
-        for _, tile in self.tiles.items():
+        for _, tile in self._tiles.items():
             tile.draw(canvas)
 
     @classmethod
@@ -109,6 +103,9 @@ class Map:
                 tiles[(x, y)] = Tile(Position(x, y), grid[i][j])
 
         return cls(tiles)
+
+    def tile_state(self, x, y) -> Iterable[Property]:
+        return self._tiles[(x, y)]
 
 
 def main():

@@ -1,28 +1,21 @@
 import sys
 import pygame
-from enum import Enum
 from typing import Dict, Iterable, List, Tuple
+from consts import (
+    BLACK,
+    BLOCK_SIZE,
+    IMAGES_HEIGHT,
+    IMAGES_WIDTH,
+    OFFSET,
+    WHITE,
+    WINDOW_HEIGHT,
+    WINDOW_WIDTH,
+    X_TILE_COUNT,
+    Y_TILE_COUNT,
+    Property,
+)
 from utils import Position
 
-
-class Property(Enum):
-    BREEZE = 0
-    STENCH = 1
-    GOLD = 2
-    PIT = 3
-    WUMPUS = 4
-
-
-BLACK = (0, 0, 0)
-WHITE = (200, 200, 200)
-BLOCK_SIZE = 128
-X_TILE_COUNT = 4
-Y_TILE_COUNT = 4
-WINDOW_HEIGHT = BLOCK_SIZE * X_TILE_COUNT
-WINDOW_WIDTH = BLOCK_SIZE * Y_TILE_COUNT
-OFFSET = BLOCK_SIZE // 3
-IMAGES_WIDTH = BLOCK_SIZE // 3
-IMAGES_HEIGHT = BLOCK_SIZE // 3
 
 breeze = pygame.transform.scale(
     pygame.image.load("breeze.png"), (IMAGES_WIDTH, IMAGES_HEIGHT)

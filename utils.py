@@ -2,8 +2,7 @@ from dataclasses import dataclass
 import heapq
 from typing import Callable, Iterator, List, Optional
 
-DOWN, RIGHT, LEFT, UP = (0, 1), (1, 0), (-1, 0), (0, -1)
-ACTIONS = {DOWN: "down", RIGHT: "right", LEFT: "left", UP: "up"}
+from consts import ACTIONS, DOWN, LEFT, RIGHT, UP
 
 
 class PriorityQueue:

@@ -90,6 +90,13 @@ def null_heuristic(
 ) -> int:
     return 0
 
+# Manhattan heuristic 
+def manhattan_heuristic(
+    problem: ShortestPathSearchProblem, state: ShortestPathState
+) -> int:
+    goal_pos = problem.goal
+    curr_pos = state.pos
+    return abs(goal_pos.x - curr_pos.x) + abs(goal_pos.y - curr_pos.y)
 
 def a_star_route(
     problem: ShortestPathSearchProblem,

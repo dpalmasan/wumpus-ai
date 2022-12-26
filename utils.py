@@ -56,7 +56,7 @@ class Point:
 class ShortestPathState:
     def __init__(
         self,
-        pos: Position,
+        pos: Point,
         cost: int,
         prev: Optional["ShortestPathState"] = None,
         action: Optional[str] = None,
@@ -74,7 +74,7 @@ class ShortestPathState:
 
 
 class ShortestPathSearchProblem:
-    def __init__(self, start: Position, goal: Position, visited: List[List[bool]]):
+    def __init__(self, start: Point, goal: Point, visited: List[List[bool]]):
         self.start = start
         self.goal = goal
         self.visited = visited
@@ -91,7 +91,7 @@ class ShortestPathSearchProblem:
 
         for dir in (LEFT, DOWN, RIGHT, UP):
             x, y = dir
-            children = Position(state.pos.x + x, state.pos.y + y)
+            children = Point(state.pos.x + x, state.pos.y + y)
             cond = (
                 children.x >= 0
                 and children.x < n

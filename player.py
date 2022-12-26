@@ -1,6 +1,7 @@
 from abc import ABCMeta, abstractmethod
 from enum import Enum
 from pylogic import propositional
+import pygame
 
 from utils import Point
 
@@ -14,7 +15,11 @@ class Direction(Enum):
 
 class Player(ABCMeta):
     @abstractmethod
-    def update(self) -> None:
+    def update(self, direction = Direction) -> None:
+        raise NotImplemented()
+
+    @abstractmethod
+    def draw(self) -> None:
         raise NotImplemented()
 
 
@@ -38,6 +43,5 @@ class LogicAIPlayer(Player):
         else:
             self._pos.update(self._pos.x + 1, self._pos.y)
 
-        def draw(self) -> None:
-
-
+    def draw(self, canvas, rect, color) -> None:
+        pygame.draw.rect(canvas, color, rect, 1)

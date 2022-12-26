@@ -14,7 +14,7 @@ from consts import (
     Y_TILE_COUNT,
     Property,
 )
-from utils import Position
+from utils import Point
 
 
 breeze = pygame.transform.scale(
@@ -42,7 +42,7 @@ properties = [
 class Tile:
     def __init__(
         self,
-        pos: Position,
+        pos: Point,
         properties: Iterable[Property] = [],
         size=(BLOCK_SIZE, BLOCK_SIZE),
     ):
@@ -93,7 +93,7 @@ class Map:
         #  For now we limit size to 6
         for j, x in zip(range(X_TILE_COUNT), range(0, WINDOW_WIDTH, BLOCK_SIZE)):
             for i, y in zip(range(Y_TILE_COUNT), range(0, WINDOW_HEIGHT, BLOCK_SIZE)):
-                tiles[(x, y)] = Tile(Position(x, y), grid[i][j])
+                tiles[(x, y)] = Tile(Point(x, y), grid[i][j])
 
         return cls(tiles)
 

@@ -18,16 +18,16 @@ from utils import Position
 
 
 breeze = pygame.transform.scale(
-    pygame.image.load("breeze.png"), (IMAGES_WIDTH, IMAGES_HEIGHT)
+    pygame.image.load("assets/breeze.png"), (IMAGES_WIDTH, IMAGES_HEIGHT)
 )
 stench = pygame.transform.scale(
-    pygame.image.load("stench.png"), (IMAGES_WIDTH, IMAGES_HEIGHT)
+    pygame.image.load("assets/stench.png"), (IMAGES_WIDTH, IMAGES_HEIGHT)
 )
 wumpus = pygame.transform.scale(
-    pygame.image.load("bear.png"), (IMAGES_WIDTH, IMAGES_HEIGHT)
+    pygame.image.load("assets/bear.png"), (IMAGES_WIDTH, IMAGES_HEIGHT)
 )
 gold = pygame.transform.scale(
-    pygame.image.load("gold.png"), (IMAGES_WIDTH, IMAGES_HEIGHT)
+    pygame.image.load("assets/gold.png"), (IMAGES_WIDTH, IMAGES_HEIGHT)
 )
 
 properties = [

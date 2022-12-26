@@ -7,6 +7,7 @@ class Property(Enum):
     GOLD = 2
     PIT = 3
     WUMPUS = 4
+    PLAYER = 5
 
 
 BLACK = (0, 0, 0)

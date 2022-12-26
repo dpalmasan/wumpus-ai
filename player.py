@@ -17,41 +17,42 @@ class Direction(Enum):
     RIGHT = 3
 
 
-class Player(ABCMeta):
-    @abstractmethod
-    def update(self, direction=Direction) -> None:
-        raise NotImplemented()
-
-    @abstractmethod
-    def draw(self) -> None:
-        raise NotImplemented()
-
-
-class LogicAIPlayer(Player):
-    def __init__(self, pos: Point, kb: propositional.PropLogicKB) -> None:
+class Player:
+    def __init__(self, pos: Point):
         self._pos = pos
-        self._kb = kb
-        self._plan = []
 
     @property
     def pos(self) -> Point:
         return self._pos
 
+    @abstractmethod
+    def update(self) -> None:
+        raise NotImplemented()
+
+    def draw(self, canvas, rect, color) -> None:
+        pygame.draw.rect(canvas, color, rect, 1)
+
+
+class LogicAIPlayer(Player):
+    def __init__(self, pos: Point, kb: propositional.PropLogicKB) -> None:
+        self._kb = kb
+        self._plan = []
+
     def _run_plan(self):
         for step in self._plan:
             yield step
 
-    def update(self):
+    def update(self, new_pos: Point):
 
         direction = next(self._plan)
-        if direction == Direction.UP:
-            self._pos.update(self._pos.x, self._pos.y - 1)
-        if direction == Direction.DOWN:
-            self._pos.update(self._pos.x, self._pos.y + 1)
-        if direction == Direction.LEFT:
-            self._pos.update(self._pos.x - 1, self._pos.y)
-        else:
-            self._pos.update(self._pos.x + 1, self._pos.y)
+        self._pos.update(new_pos)
 
-    def draw(self, canvas, rect, color) -> None:
-        pygame.draw.rect(canvas, color, rect, 1)
+class HumanPlayer(Player):
+    def __init__(self, pos):
+        Player.__init__(self, pos)
+
+    def update(self, new_pos):
+        self._pos = new_pos
+
+    def __repr__(self) -> str:
+        return f"HumanPlayer({self.pos}"

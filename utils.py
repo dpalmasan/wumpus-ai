@@ -49,6 +49,9 @@ class Point:
     def __eq__(self, other) -> bool:
         return self.x == other.x and self.y == other.y
 
+    def __neq__(self, other) -> bool:
+        return not self == other
+
     def __repr__(self) -> str:
         return f"Point(x={self.x}, y={self.y})"
 

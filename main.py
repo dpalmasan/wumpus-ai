@@ -16,6 +16,7 @@ from consts import (
 )
 from utils import Point
 from player import HumanPlayer
+from wumpus import WumpusWorld
 
 
 breeze = pygame.transform.scale(
@@ -106,17 +107,44 @@ class Map:
     def tile_state(self, x, y) -> Iterable[Property]:
         return self._tiles[(x, y)]
 
+
 def draw_background(canvas, tiles_coords):
     for x, y in tiles_coords:
         rect = pygame.Rect(x, y, BLOCK_SIZE, BLOCK_SIZE)
         pygame.draw.rect(canvas, BLACK, rect, 1)
 
+
 def draw_visible_cells(canvas, seen):
     for j in range(len(seen)):
         for i in range(len(seen[j])):
             if not seen[i][j]:
-                rect = pygame.Rect(j*BLOCK_SIZE, i*BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE)
+                rect = pygame.Rect(
+                    j * BLOCK_SIZE, i * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE
+                )
                 pygame.draw.rect(canvas, BLACK, rect)
+
+
+def create_wumpus_world():
+    return WumpusWorld(
+        [
+            [set("S"), set(), set("B"), set("P")],
+            [set("W"), set(["B", "S", "W"]), set("P"), set("B")],
+            [set("S"), set(), set("B"), set()],
+            [set(), set("B"), set("P"), set("B")],
+        ]
+    )
+
+def process_human_input(event, pos, agent, tiles):
+    if event.type == pygame.KEYDOWN:
+        if event.key == pygame.K_DOWN:
+            new_pos = Point(pos.x, min(pos.y + 1, len(tiles) - 1))
+        if event.key == pygame.K_UP:
+            new_pos = Point(pos.x, max(pos.y - 1, 0))
+        if event.key == pygame.K_LEFT:
+            new_pos = Point(max(pos.x - 1, 0), pos.y)
+        if event.key == pygame.K_RIGHT:
+            new_pos = Point(min(pos.x + 1, len(tiles) - 1), pos.y)
+        agent.update(new_pos)
 
 
 def main():
@@ -138,7 +166,14 @@ def main():
         seen.append(row)
     agent = HumanPlayer(current_pos)
     tiles = [
-        [[Property.STENCH], [], [Property.BREEZE], [Property.PIT,]],
+        [
+            [Property.STENCH],
+            [],
+            [Property.BREEZE],
+            [
+                Property.PIT,
+            ],
+        ],
         [
             [Property.WUMPUS],
             [Property.BREEZE, Property.STENCH, Property.GOLD],
@@ -151,7 +186,10 @@ def main():
 
     map = Map.from_list(tiles)
     rect = player.get_rect()
-    rect.center = (rect.center[0] + OFFSET + agent.pos.x * BLOCK_SIZE, rect.center[1] + OFFSET + agent.pos.y * BLOCK_SIZE)
+    rect.center = (
+        rect.center[0] + OFFSET + agent.pos.x * BLOCK_SIZE,
+        rect.center[1] + OFFSET + agent.pos.y * BLOCK_SIZE,
+    )
     SCREEN.blit(player, rect)
     draw_background(SCREEN, map.get_tiles_coords())
     while True:
@@ -161,16 +199,9 @@ def main():
                 sys.exit()
 
             pos = agent.pos
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_DOWN:
-                    new_pos = Point(pos.x, min(pos.y + 1, len(tiles) - 1))
-                if event.key == pygame.K_UP:
-                    new_pos = Point(pos.x, max(pos.y - 1, 0))
-                if event.key == pygame.K_LEFT:
-                    new_pos = Point(max(pos.x - 1, 0), pos.y)
-                if event.key == pygame.K_RIGHT:
-                    new_pos = Point(min(pos.x + 1, len(tiles) - 1), pos.y)
-                agent.update(new_pos)
+            if isinstance(agent, HumanPlayer):
+                process_human_input(event, pos, agent, tiles)
+            
 
         new_pos = agent.pos
         if current_pos != agent.pos:
@@ -179,17 +210,18 @@ def main():
                 tiles[current_pos.y][current_pos.x].pop()
 
             tiles[new_pos.y][new_pos.x].append(Property.PLAYER)
-            
+
         SCREEN.fill(WHITE)
         rect = player.get_rect()
-        position = rect.move(OFFSET + agent.pos.x * BLOCK_SIZE, OFFSET + agent.pos.y * BLOCK_SIZE)
+        position = rect.move(
+            OFFSET + agent.pos.x * BLOCK_SIZE, OFFSET + agent.pos.y * BLOCK_SIZE
+        )
         SCREEN.blit(player, position)
         map.draw(SCREEN)
         draw_visible_cells(SCREEN, seen)
         draw_background(SCREEN, map.get_tiles_coords())
         pygame.display.update()
         clock.tick(60)
-
 
 
 main()

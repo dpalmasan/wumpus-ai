@@ -9,6 +9,7 @@ class WumpusWorld:
         pass
 
     def _one_wumpus_rule_1(self, map_width: int = 4, map_height: int = 4):
+        """There should exist one wumpus."""
         literals = set()
         for i in range(map_width):
             for j in range(map_height):
@@ -17,6 +18,7 @@ class WumpusWorld:
         return CnfClause(literals)
 
     def _one_wumpus_rule_2(self, map_width: int = 4, map_height: int = 4):
+        """There must be just one Wumpus."""
         cnf_clauses = set()
         for j in range(map_height):
             for i in range(map_width):

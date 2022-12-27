@@ -22,6 +22,7 @@ class Direction(Enum):
     LEFT = 2
     RIGHT = 3
 
+
 class NoAvailableSafeTiles(Exception):
     pass
 
@@ -112,21 +113,20 @@ class LogicAIPlayer(Player):
         self._pos.update(new_pos)
 
     def _perceive(self, wumpus_world, x, y):
-        if ("S" in wumpus_world[y][x]):
+        if "S" in wumpus_world[y][x]:
             clause = CnfClause([Variable(f"S{x}{y}")])
         else:
             clause = CnfClause([Variable(f"S{x}{y}", False)])
 
         self._kb.add(clause)
 
-        if ("B" in wumpus_world):
+        if "B" in wumpus_world:
             clause = CnfClause([Variable(f"B{x}{y}")])
         else:
             clause = CnfClause([Variable(f"B{x}{y}", False)])
 
         self._kb.add(clause)
 
-        
 
 class HumanPlayer(Player):
     def __init__(self, pos):

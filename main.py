@@ -111,6 +111,14 @@ def draw_background(canvas, tiles_coords):
         rect = pygame.Rect(x, y, BLOCK_SIZE, BLOCK_SIZE)
         pygame.draw.rect(canvas, BLACK, rect, 1)
 
+def draw_visible_cells(canvas, seen):
+    for j in range(len(seen)):
+        for i in range(len(seen[j])):
+            if not seen[i][j]:
+                rect = pygame.Rect(j*BLOCK_SIZE, i*BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE)
+                pygame.draw.rect(canvas, BLACK, rect)
+
+
 def main():
     pygame.init()
     SCREEN = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
@@ -119,6 +127,15 @@ def main():
     breeze.convert()
 
     current_pos = Point(0, 3)
+    seen = []
+    for j in range(4):
+        row = []
+        for i in range(4):
+            if Point(i, j) == current_pos:
+                row.append(True)
+            else:
+                row.append(False)
+        seen.append(row)
     agent = HumanPlayer(current_pos)
     tiles = [
         [[Property.STENCH], [], [Property.BREEZE], [Property.PIT,]],
@@ -146,17 +163,18 @@ def main():
             pos = agent.pos
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_DOWN:
-                    new_pos = Point(pos.x, pos.y + 1)
+                    new_pos = Point(pos.x, min(pos.y + 1, len(tiles) - 1))
                 if event.key == pygame.K_UP:
-                    new_pos = Point(pos.x, pos.y - 1)
+                    new_pos = Point(pos.x, max(pos.y - 1, 0))
                 if event.key == pygame.K_LEFT:
-                    new_pos = Point(pos.x - 1, pos.y)
+                    new_pos = Point(max(pos.x - 1, 0), pos.y)
                 if event.key == pygame.K_RIGHT:
-                    new_pos = Point(pos.x + 1, pos.y)
+                    new_pos = Point(min(pos.x + 1, len(tiles) - 1), pos.y)
                 agent.update(new_pos)
 
         new_pos = agent.pos
         if current_pos != agent.pos:
+            seen[new_pos.y][new_pos.x] = True
             if tiles[current_pos.y][current_pos.x]:
                 tiles[current_pos.y][current_pos.x].pop()
 
@@ -167,6 +185,7 @@ def main():
         position = rect.move(OFFSET + agent.pos.x * BLOCK_SIZE, OFFSET + agent.pos.y * BLOCK_SIZE)
         SCREEN.blit(player, position)
         map.draw(SCREEN)
+        draw_visible_cells(SCREEN, seen)
         draw_background(SCREEN, map.get_tiles_coords())
         pygame.display.update()
         clock.tick(60)

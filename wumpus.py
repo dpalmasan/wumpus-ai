@@ -11,6 +11,9 @@ class WumpusWorld:
     def __init__(self, grid):
         self._grid = grid
 
+    def __getitem__(self, key):
+        return self._grid[key]
+
     def _one_wumpus_rule(self):
         """There should exist one wumpus."""
         map_width = len(self._grid[0])
@@ -32,37 +35,37 @@ class WumpusWorld:
                 if i > 0:
                     cnf_clauses.add(
                         CnfClause(
-                            [
+                            set([
                                 Variable(f"W{i}{j}", truthyness=False),
                                 Variable(f"W{i - 1}{j}", truthyness=False),
-                            ]
+                            ])
                         )
                     )
                 if i < map_width - 1:
                     cnf_clauses.add(
                         CnfClause(
-                            [
+                            set([
                                 Variable(f"W{i}{j}", truthyness=False),
                                 Variable(f"W{i + 1}{j}", truthyness=False),
-                            ]
+                            ])
                         )
                     )
                 if j > 0:
                     cnf_clauses.add(
                         CnfClause(
-                            [
+                            set([
                                 Variable(f"W{i}{j}", truthyness=False),
                                 Variable(f"W{i}{j - 1}", truthyness=False),
-                            ]
+                            ])
                         )
                     )
                 if j < map_height - 1:
                     cnf_clauses.add(
                         CnfClause(
-                            [
+                            set([
                                 Variable(f"W{i}{j}", truthyness=False),
                                 Variable(f"W{i}{j + 1}", truthyness=False),
-                            ]
+                            ])
                         )
                     )
         return cnf_clauses
@@ -80,7 +83,7 @@ class WumpusWorld:
                 w1 = None
                 if i > 0:
                     p1 = Variable(f"P{i-1}{j}", True)
-                    W1 = Variable(f"W{i-1}{j}", True)
+                    w1 = Variable(f"W{i-1}{j}", True)
 
                 p2 = None
                 w2 = None
@@ -111,3 +114,13 @@ class WumpusWorld:
                 cnf = to_cnf(s >> w)
                 cnf_clauses |= parser.parse(cnf)
         return cnf_clauses
+
+def create_wumpus_world():
+    return WumpusWorld(
+        [
+            [set("S"), set(), set("B"), set("P")],
+            [set("W"), set(["B", "S", "G"]), set("P"), set("B")],
+            [set("S"), set(), set("B"), set()],
+            [set(), set("B"), set("P"), set("B")],
+        ]
+    )

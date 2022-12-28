@@ -1,4 +1,5 @@
 import sys
+import time
 import pygame
 from typing import Dict, Iterable, List, Tuple
 from consts import (
@@ -15,7 +16,7 @@ from consts import (
     Property,
 )
 from utils import Point
-from player import HumanPlayer
+from player import HumanPlayer, LogicAIPlayer
 from wumpus import WumpusWorld
 
 
@@ -124,16 +125,6 @@ def draw_visible_cells(canvas, seen):
                 pygame.draw.rect(canvas, BLACK, rect)
 
 
-def create_wumpus_world():
-    return WumpusWorld(
-        [
-            [set("S"), set(), set("B"), set("P")],
-            [set("W"), set(["B", "S", "W"]), set("P"), set("B")],
-            [set("S"), set(), set("B"), set()],
-            [set(), set("B"), set("P"), set("B")],
-        ]
-    )
-
 def process_human_input(event, pos, agent, tiles):
     if event.type == pygame.KEYDOWN:
         if event.key == pygame.K_DOWN:
@@ -164,7 +155,9 @@ def main():
             else:
                 row.append(False)
         seen.append(row)
+    wumpus_world = create_wumpus_world()
     agent = HumanPlayer(current_pos)
+    agent = LogicAIPlayer(current_pos, wumpus_world, seen)
     tiles = [
         [
             [Property.STENCH],
@@ -193,6 +186,8 @@ def main():
     SCREEN.blit(player, rect)
     draw_background(SCREEN, map.get_tiles_coords())
     while True:
+        if Property.GOLD in tiles[current_pos.y][current_pos.x]:
+            break
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -201,8 +196,10 @@ def main():
             pos = agent.pos
             if isinstance(agent, HumanPlayer):
                 process_human_input(event, pos, agent, tiles)
-            
-
+            else:
+                if event.type == pygame.KEYDOWN:
+                    agent.update()
+                
         new_pos = agent.pos
         if current_pos != agent.pos:
             seen[new_pos.y][new_pos.x] = True
@@ -221,7 +218,9 @@ def main():
         draw_visible_cells(SCREEN, seen)
         draw_background(SCREEN, map.get_tiles_coords())
         pygame.display.update()
+
         clock.tick(60)
+
 
 
 main()

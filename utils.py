@@ -100,7 +100,9 @@ class ShortestPathSearchProblem:
                 and children.x < n
                 and children.y >= 0
                 and children.y < m
-                and self.visited[children.y][children.x]
+                and (self.visited[children.y][children.x] or
+                    Point(children.x, children.y) == self.goal
+                )
             )
             if cond:
                 yield ShortestPathState(children, state.cost + 1, state, ACTIONS[dir])

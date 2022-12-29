@@ -17,7 +17,7 @@ from consts import (
 )
 from utils import Point
 from player import HumanPlayer, LogicAIPlayer
-from wumpus import WumpusWorld
+from wumpus import WumpusWorld, create_wumpus_world
 
 
 breeze = pygame.transform.scale(
@@ -84,6 +84,30 @@ class Tile:
             canvas.blit(gold, rect)
 
 
+class Pane(object):
+    def __init__(self):
+        self.font = pygame.font.SysFont("Arial", 25)
+
+    def add_rect(self, canvas):
+        self.rect = pygame.draw.rect(
+            canvas, BLACK, (WINDOW_WIDTH // 2, 75, 200, 100), 2
+        )
+        self.rect = pygame.draw.rect(
+            canvas,
+            WHITE,
+            (WINDOW_WIDTH // 2 - 100, WINDOW_HEIGHT // 2 - 2 * OFFSET, 200, BLOCK_SIZE),
+        )
+
+    def add_text(self, canvas, text="hello"):
+        canvas.blit(
+            self.font.render(text, True, (255, 0, 0)),
+            (
+                WINDOW_WIDTH // 2 - OFFSET,
+                WINDOW_HEIGHT // 2 - OFFSET,
+            ),
+        )
+
+
 class Map:
     def __init__(self, tiles: Dict[Tuple[int, int], Tile]):
         self._tiles = tiles
@@ -117,7 +141,7 @@ def draw_background(canvas, tiles_coords):
 
 def draw_visible_cells(canvas, seen):
     for j in range(len(seen)):
-        for i in range(len(seen[j])):
+        for i in range(len(seen[0])):
             if not seen[i][j]:
                 rect = pygame.Rect(
                     j * BLOCK_SIZE, i * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE
@@ -127,15 +151,21 @@ def draw_visible_cells(canvas, seen):
 
 def process_human_input(event, pos, agent, tiles):
     if event.type == pygame.KEYDOWN:
+        updated = False
         if event.key == pygame.K_DOWN:
             new_pos = Point(pos.x, min(pos.y + 1, len(tiles) - 1))
-        if event.key == pygame.K_UP:
+            updated = True
+        elif event.key == pygame.K_UP:
             new_pos = Point(pos.x, max(pos.y - 1, 0))
-        if event.key == pygame.K_LEFT:
+            updated = True
+        elif event.key == pygame.K_LEFT:
             new_pos = Point(max(pos.x - 1, 0), pos.y)
-        if event.key == pygame.K_RIGHT:
+            updated = True
+        elif event.key == pygame.K_RIGHT:
             new_pos = Point(min(pos.x + 1, len(tiles) - 1), pos.y)
-        agent.update(new_pos)
+            updated = True
+        if updated:
+            agent.update(new_pos)
 
 
 def main():
@@ -157,7 +187,7 @@ def main():
         seen.append(row)
     wumpus_world = create_wumpus_world()
     agent = HumanPlayer(current_pos)
-    agent = LogicAIPlayer(current_pos, wumpus_world, seen)
+    # agent = LogicAIPlayer(current_pos, wumpus_world, seen)
     tiles = [
         [
             [Property.STENCH],
@@ -185,8 +215,14 @@ def main():
     )
     SCREEN.blit(player, rect)
     draw_background(SCREEN, map.get_tiles_coords())
+    Pan3 = Pane()
+
     while True:
-        if Property.GOLD in tiles[current_pos.y][current_pos.x]:
+
+        if (
+            Property.GOLD in tiles[agent.pos.y][agent.pos.x]
+            or Property.PIT in tiles[agent.pos.y][agent.pos.x]
+        ):
             break
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -199,8 +235,11 @@ def main():
             else:
                 if event.type == pygame.KEYDOWN:
                     agent.update()
-                
+                    seen[agent.pos.y][agent.pos.x] = True
+                    time.sleep(1)
+
         new_pos = agent.pos
+        # print(new_pos)
         if current_pos != agent.pos:
             seen[new_pos.y][new_pos.x] = True
             if tiles[current_pos.y][current_pos.x]:
@@ -221,6 +260,31 @@ def main():
 
         clock.tick(60)
 
+    waiting = True
+    while waiting:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+
+            if event.type == pygame.KEYDOWN:
+                waiting = False
+
+        SCREEN.fill(WHITE)
+        rect = player.get_rect()
+        position = rect.move(
+            OFFSET + agent.pos.x * BLOCK_SIZE, OFFSET + agent.pos.y * BLOCK_SIZE
+        )
+        SCREEN.blit(player, position)
+        map.draw(SCREEN)
+        draw_visible_cells(SCREEN, seen)
+        draw_background(SCREEN, map.get_tiles_coords())
+        Pan3.add_rect(SCREEN)
+        if Property.GOLD in tiles[agent.pos.y][agent.pos.x]:
+            Pan3.add_text(SCREEN, "You won")
+        else:
+            Pan3.add_text(SCREEN, "You lost")
+        pygame.display.update()
 
 
 main()

@@ -125,7 +125,7 @@ develop = false
 type = "git"
 url = "https://github.com/dpalmasan/py-logic.git"
 reference = "main"
-resolved_reference = "c65b6fbf6d6602c7519fc5d8a68918a7ae3e5cab"
+resolved_reference = "0679a59cdff1564affc6fb5f8e7e6ae1f34fb3f6"
 
 [[package]]
 name = "tomli"

@@ -1,10 +1,11 @@
+from collections import defaultdict
 from functools import reduce
+from typing import Dict, List
 from pylogic.propositional import (
     Variable,
-    CnfClause,
-    CnfParser,
-    to_cnf,
+    Clause,
 )
+from utils import Point
 
 
 class WumpusWorld:
@@ -14,67 +15,52 @@ class WumpusWorld:
     def __getitem__(self, key):
         return self._grid[key]
 
-    def _one_wumpus_rule(self):
+    def _one_wumpus_rule(self) -> Clause:
         """There should exist one wumpus."""
         map_width = len(self._grid[0])
         map_height = len(self._grid)
-        literals = set()
+        literals: List[Variable] = []
         for i in range(map_width):
             for j in range(map_height):
-                literals.add(Variable(f"W{i}{j}", truthyness=True))
+                literals.append(Variable(f"W{i}{j}", is_negated=False, truthyness=None))
 
-        return CnfClause(literals)
+        return reduce(lambda x, y: x | y, literals)
 
-    def _at_most_one_wumpus(self):
+    def _at_most_one_wumpus(self) -> Dict[Point, Clause]:
         """There must be just one Wumpus."""
         map_width = len(self._grid[0])
         map_height = len(self._grid)
-        cnf_clauses = set()
+        clauses = defaultdict(list)
         for j in range(map_height):
             for i in range(map_width):
                 if i > 0:
-                    cnf_clauses.add(
-                        CnfClause(
-                            set([
-                                Variable(f"W{i}{j}", truthyness=False),
-                                Variable(f"W{i - 1}{j}", truthyness=False),
-                            ])
-                        )
+                    clauses[Point(i, j)].append(
+                        Variable(f"W{i}{j}", is_negated=True, truthyness=None)
+                        | Variable(f"W{i - 1}{j}", is_negated=True, truthyness=None)
                     )
                 if i < map_width - 1:
-                    cnf_clauses.add(
-                        CnfClause(
-                            set([
-                                Variable(f"W{i}{j}", truthyness=False),
-                                Variable(f"W{i + 1}{j}", truthyness=False),
-                            ])
-                        )
+                    clauses[Point(i, j)].append(
+                        Variable(f"W{i}{j}", is_negated=True, truthyness=None)
+                        | Variable(f"W{i + 1}{j}", is_negated=True, truthyness=None)
                     )
                 if j > 0:
-                    cnf_clauses.add(
-                        CnfClause(
-                            set([
-                                Variable(f"W{i}{j}", truthyness=False),
-                                Variable(f"W{i}{j - 1}", truthyness=False),
-                            ])
-                        )
+                    clauses[Point(i, j)].append(
+                        Variable(f"W{i}{j}", is_negated=True, truthyness=None)
+                        | Variable(f"W{i}{j - 1}", is_negated=True, truthyness=None)
                     )
+   
                 if j < map_height - 1:
-                    cnf_clauses.add(
-                        CnfClause(
-                            set([
-                                Variable(f"W{i}{j}", truthyness=False),
-                                Variable(f"W{i}{j + 1}", truthyness=False),
-                            ])
+                    if j > 0:
+                        clauses[Point(i, j)].append(
+                            Variable(f"W{i}{j}", is_negated=True, truthyness=None)
+                            | Variable(f"W{i}{j + 1}", is_negated=True, truthyness=None)
                         )
-                    )
-        return cnf_clauses
+        return clauses
 
-    def _breeze_stench_rules(self):
+    def _breeze_stench_rules(self) -> Dict[Point, Clause]:
         map_width = len(self._grid[0])
         map_height = len(self._grid)
-        cnf_clauses = set()
-        parser = CnfParser()
+        clauses = defaultdict(list)
         for i in range(map_width):
             for j in range(map_height):
                 b = Variable(f"B{i}{j}", True)
@@ -109,11 +95,10 @@ class WumpusWorld:
                     lambda x, y: x | y,
                     filter(lambda x: x is not None, [w1, w2, w3, w4]),
                 )
-                cnf = to_cnf(b >> p)
-                cnf_clauses |= parser.parse(cnf)
-                cnf = to_cnf(s >> w)
-                cnf_clauses |= parser.parse(cnf)
-        return cnf_clauses
+                clauses[Point(i, j)].append(b >> p)
+                clauses[Point(i, j)].append(s >> w)
+        return clauses
+
 
 def create_wumpus_world():
     return WumpusWorld(

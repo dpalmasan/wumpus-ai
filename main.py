@@ -186,8 +186,8 @@ def main():
                 row.append(False)
         seen.append(row)
     wumpus_world = create_wumpus_world()
-    agent = HumanPlayer(current_pos)
-    # agent = LogicAIPlayer(current_pos, wumpus_world, seen)
+    # agent = HumanPlayer(current_pos)
+    agent = LogicAIPlayer(current_pos, wumpus_world, seen)
     tiles = [
         [
             [Property.STENCH],
@@ -239,7 +239,6 @@ def main():
                     time.sleep(1)
 
         new_pos = agent.pos
-        # print(new_pos)
         if current_pos != agent.pos:
             seen[new_pos.y][new_pos.x] = True
             if tiles[current_pos.y][current_pos.x]:

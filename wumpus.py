@@ -1,3 +1,4 @@
+from ast import Tuple
 from collections import defaultdict
 from functools import reduce
 from typing import Dict, List
@@ -26,66 +27,66 @@ class WumpusWorld:
 
         return reduce(lambda x, y: x | y, literals)
 
-    def _at_most_one_wumpus(self) -> Dict[Point, Clause]:
+    def _at_most_one_wumpus(self) -> Clause:
         """There must be just one Wumpus."""
         map_width = len(self._grid[0])
         map_height = len(self._grid)
-        clauses = defaultdict(list)
+        clauses = []
         for j in range(map_height):
             for i in range(map_width):
                 if i > 0:
-                    clauses[Point(i, j)].append(
+                    clauses.append(
                         Variable(f"W{i}{j}", is_negated=True, truthyness=None)
                         | Variable(f"W{i - 1}{j}", is_negated=True, truthyness=None)
                     )
                 if i < map_width - 1:
-                    clauses[Point(i, j)].append(
+                    clauses.append(
                         Variable(f"W{i}{j}", is_negated=True, truthyness=None)
                         | Variable(f"W{i + 1}{j}", is_negated=True, truthyness=None)
                     )
                 if j > 0:
-                    clauses[Point(i, j)].append(
+                    clauses.append(
                         Variable(f"W{i}{j}", is_negated=True, truthyness=None)
                         | Variable(f"W{i}{j - 1}", is_negated=True, truthyness=None)
                     )
    
                 if j < map_height - 1:
                     if j > 0:
-                        clauses[Point(i, j)].append(
+                        clauses.append(
                             Variable(f"W{i}{j}", is_negated=True, truthyness=None)
                             | Variable(f"W{i}{j + 1}", is_negated=True, truthyness=None)
                         )
-        return clauses
+        return reduce(lambda x, y: x & y, clauses)
 
-    def _breeze_stench_rules(self) -> Dict[Point, Clause]:
+    def _breeze_stench_rules(self):
         map_width = len(self._grid[0])
         map_height = len(self._grid)
         clauses = defaultdict(list)
         for i in range(map_width):
             for j in range(map_height):
-                b = Variable(f"B{i}{j}", True)
-                s = Variable(f"S{i}{j}", True)
+                b = Variable(f"B{i}{j}", False)
+                s = Variable(f"S{i}{j}", False)
                 p1 = None
                 w1 = None
                 if i > 0:
-                    p1 = Variable(f"P{i-1}{j}", True)
-                    w1 = Variable(f"W{i-1}{j}", True)
+                    p1 = Variable(f"P{i-1}{j}", False)
+                    w1 = Variable(f"W{i-1}{j}", False)
 
                 p2 = None
                 w2 = None
                 if i < map_width - 1:
-                    p2 = Variable(f"P{i+1}{j}", True)
-                    w2 = Variable(f"W{i+1}{j}", True)
+                    p2 = Variable(f"P{i+1}{j}", False)
+                    w2 = Variable(f"W{i+1}{j}", False)
                 p3 = None
                 w3 = None
                 if j > 0:
-                    p3 = Variable(f"P{i}{j-1}", True)
-                    w3 = Variable(f"W{i}{j-1}", True)
+                    p3 = Variable(f"P{i}{j-1}", False)
+                    w3 = Variable(f"W{i}{j-1}", False)
                 p4 = None
                 w4 = None
                 if j < map_height - 1:
-                    p4 = Variable(f"P{i}{j + 1}", True)
-                    w4 = Variable(f"W{i}{j + 1}", True)
+                    p4 = Variable(f"P{i}{j + 1}", False)
+                    w4 = Variable(f"W{i}{j + 1}", False)
 
                 p = reduce(
                     lambda x, y: x | y,
@@ -95,8 +96,8 @@ class WumpusWorld:
                     lambda x, y: x | y,
                     filter(lambda x: x is not None, [w1, w2, w3, w4]),
                 )
-                clauses[Point(i, j)].append(b >> p)
-                clauses[Point(i, j)].append(s >> w)
+                clauses["B", Point(i, j)].append(b >> p)
+                clauses["S", Point(i, j)].append(s >> w)
         return clauses
 
 

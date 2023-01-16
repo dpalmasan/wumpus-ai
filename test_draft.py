@@ -48,4 +48,78 @@ x = Variable("b", [False, True])
 
 res = enumeration_ask(x, e, bn)
 
+# Expected result
+# {False: 0.7158281646356071, True: 0.2841718353643929}
+print(res)
+
+bn = BayesianNetwork(
+    [
+        BayesianNetworkNode(
+            Variable("c", [False, True]),
+            ConditionalProbabilityTable({(True,): 0.8,}, ("c",)),
+        ),
+        BayesianNetworkNode(
+            Variable("r", [False, True]),
+            ConditionalProbabilityTable({(True,): 0.8, (False,): 0.1}, ("c",)),
+        ),
+        BayesianNetworkNode(
+            Variable("s", [False, True]),
+            ConditionalProbabilityTable({(True,): 0.1, (False,): 0.5}, ("c",)),
+        ),
+        BayesianNetworkNode(
+            Variable("g", [False, True]),
+            ConditionalProbabilityTable(
+                {
+                    (True, True): 0.99,
+                    (True, False): 0.9,
+                    (False, True): 0.9,
+                    (False, False): 0,
+                },
+                ("s", "r"),
+            ),
+        ),
+    ]
+)
+
+# Expected {False: 0.2547999999999999, True: 0.7452}
+x = Variable("g", [False, True])
+e = {
+    "c": True,
+}
+
+res = enumeration_ask(x, e, bn)
+print(res)
+
+bn = BayesianNetwork(
+    [
+        BayesianNetworkNode(
+            Variable("r", [False, True]),
+            ConditionalProbabilityTable({(True,): 0.2}, ("r",)),
+        ),
+        BayesianNetworkNode(
+            Variable("s", [False, True]),
+            ConditionalProbabilityTable({(True,): 0.01, (False,): 0.4}, ("r",)),
+        ),
+        BayesianNetworkNode(
+            Variable("g", [False, True]),
+            ConditionalProbabilityTable(
+                {
+                    (True, True): 0.99,
+                    (True, False): 0.9,
+                    (False, True): 0.8,
+                    (False, False): 0,
+                },
+                ("s", "r"),
+            ),
+        ),
+    ]
+)
+
+x = Variable("r", [False, True])
+e = {
+    "g": True,
+}
+
+# Expected result {False: 0.6423123243677238, True: 0.3576876756322762}
+res = enumeration_ask(x, e, bn)
 print(res)

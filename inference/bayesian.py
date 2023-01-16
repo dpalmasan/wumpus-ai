@@ -102,6 +102,7 @@ class BayesianNetwork:
     def vars(self) -> List[BayesianNetworkNode]:
         return self._vars
 
+
 def enumeration_ask(x: Variable, e: Dict[str, Any], bn: BayesianNetwork):
     q = {}
     for xi in x:
@@ -116,7 +117,19 @@ def enumeration_ask(x: Variable, e: Dict[str, Any], bn: BayesianNetwork):
     return q
 
 
-def enumerate_all(vars: List[BayesianNetworkNode], e) -> float:
+def enumerate_all(vars: List[BayesianNetworkNode], e: Dict[str, Any]) -> float:
+    """Compute probability distribution of a variable given observed values.
+
+    TODO: Optimize memory usage, as to get the correct result we are
+    creating copies of observed values
+
+    :param vars: Variables with their CPT
+    :type vars: List[BayesianNetworkNode]
+    :param e: Observed values
+    :type e: Dict[str, Any]
+    :return: Conditional probability
+    :rtype: float
+    """
     if len(vars) == 0:
         return 1
     y = vars[0]
@@ -126,7 +139,7 @@ def enumerate_all(vars: List[BayesianNetworkNode], e) -> float:
             if not e[y.var.name]:
                 py = 1 - py
             return py * enumerate_all(vars[1:], e)
-                
+
         parent = tuple(e[p] for p in y.cpt.varnames)
         py = y.cpt[parent]
         if not e[y.var.name]:
@@ -142,10 +155,12 @@ def enumerate_all(vars: List[BayesianNetworkNode], e) -> float:
         ey[y.var.name] = False
         sum += (1 - y.cpt[(True,)]) * enumerate_all(vars[1:], ey)
         return sum
-        
+
     parent = tuple(e[p] for p in y.cpt.varnames)
-    e[y.var.name] = True
-    sum += y.cpt[parent] * enumerate_all(vars[1:], e)
-    e[y.var.name] = False
-    sum += (1 - y.cpt[parent]) * enumerate_all(vars[1:], e)
+    ey = e.copy()
+    ey[y.var.name] = True
+    sum += y.cpt[parent] * enumerate_all(vars[1:], ey)
+    ey = e.copy()
+    ey[y.var.name] = False
+    sum += (1 - y.cpt[parent]) * enumerate_all(vars[1:], ey)
     return sum

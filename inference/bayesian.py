@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 
 class InvalidCPTException(Exception):
@@ -32,79 +32,120 @@ class ConditionalProbabilityTable:
         return self._varnames
 
     def __contains__(self, item: str) -> bool:
-        return item in self.varnames
+        return item in self._probs
 
     def __repr__(self) -> str:
         return "\n".join(f"{row}: {value}" for row, value in self._probs.items())
+
+    def __getitem__(self, item):
+        return self._probs[item]
+
+    def __iter__(self):
+        yield from self._probs.items()
+
+
+class Variable:
+    def __init__(self, name: str, values: List[Any]) -> None:
+        self._name = name
+        self._values = sorted(values)
+
+    @property
+    def name(self) -> str:
+        return self._name
+
+    @property
+    def values(self) -> List[Any]:
+        return self._values
+
+    def __repr__(self) -> str:
+        return f"{self.name} {self.values}"
+
+    def hash(self) -> int:
+        return repr(self)
+
+    def __eq__(self, other) -> bool:
+        return self.name == other.name and self.values == other.values
+
+    def __iter__(self) -> Any:
+        yield from self.values
 
 
 class BayesianNetworkNode:
     def __init__(
         self,
-        varname: str,
+        var: Variable,
         cpt: ConditionalProbabilityTable,
-        parents: Optional[List["BayesianNetworkNode"]] = None,
     ):
-        self._varname = varname
-        self.cpt = cpt
-        self._parents = []
-        if parents is not None:
-            self._parents = parents
-        assert len(self._parents) == self.cpt.n_vars
+        self._var = var
+        self._cpt = cpt
 
     @property
-    def parents(self) -> List["BayesianNetworkNode"]:
-        return list(self._parents)
+    def var(self) -> Variable:
+        return self._var
 
     @property
-    def varname(self) -> str:
-        return self._varname
+    def cpt(self):
+        return self._cpt
+
+    def is_independent_var(self) -> bool:
+        return self.cpt.n_vars == 1 and self.cpt.varnames[0] == self.var.name
+
+    def __iter__(self):
+        yield from self._var
 
 
 class BayesianNetwork:
-    def __init__(self, nodes: Dict[str, BayesianNetworkNode]) -> None:
-        self._nodes = nodes
-        self._vars = [var for var in self._nodes.items()]
+    def __init__(self, nodes: List[BayesianNetworkNode]) -> None:
+        self._vars = [node for node in nodes]
 
     @property
-    def nodes(self) -> Dict[str, float]:
-        return self._nodes
-
-    @property
-    def vars(self) -> List[str]:
+    def vars(self) -> List[BayesianNetworkNode]:
         return self._vars
 
-
-# Test case
-cpt = ConditionalProbabilityTable(
-    {
-        (True, True): 0.95,
-        (True, False): 0.94,
-        (False, True): 0.29,
-        (False, False): 0.001,
-    },
-    ("p", "j")
-)
-
-print(cpt, "p" in cpt, "a" in cpt)
-
-def enumeration_ask(x, e, bn: BayesianNetwork):
+def enumeration_ask(x: Variable, e: Dict[str, Any], bn: BayesianNetwork):
     q = {}
-    for xi in bn[x]:
-        exi = e.copy()
-        exi[xi] = x[xi]
-        q[xi] = enumerate_all(bn.vars, exi)
+    for xi in x:
+        ex = e.copy()
+        ex[x.name] = xi
+        q[xi] = enumerate_all(bn.vars, ex)
 
+    # Normalize distribution
+    norm_den = sum(q.values())
+    for key in q:
+        q[key] /= norm_den
     return q
 
 
-def enumerate_all(vars, e) -> float:
+def enumerate_all(vars: List[BayesianNetworkNode], e) -> float:
     if len(vars) == 0:
         return 1
     y = vars[0]
-    if any(yi in e for yi in y):
-        return y * enumerate_all(vars[1:], e)
+    if y.var.name in e:
+        if y.is_independent_var():
+            py = y.cpt[(True,)]
+            if not e[y.var.name]:
+                py = 1 - py
+            return py * enumerate_all(vars[1:], e)
+                
+        parent = tuple(e[p] for p in y.cpt.varnames)
+        py = y.cpt[parent]
+        if not e[y.var.name]:
+            py = 1 - py
+        return py * enumerate_all(vars[1:], e)
 
     sum = 0
-
-    return 0
+    if y.is_independent_var():
+        ey = e.copy()
+        ey[y.var.name] = True
+        sum += y.cpt[(True,)] * enumerate_all(vars[1:], ey)
+        ey = e.copy()
+        ey[y.var.name] = False
+        sum += (1 - y.cpt[(True,)]) * enumerate_all(vars[1:], ey)
+        return sum
+        
+    parent = tuple(e[p] for p in y.cpt.varnames)
+    e[y.var.name] = True
+    sum += y.cpt[parent] * enumerate_all(vars[1:], e)
+    e[y.var.name] = False
+    sum += (1 - y.cpt[parent]) * enumerate_all(vars[1:], e)
+    return sum

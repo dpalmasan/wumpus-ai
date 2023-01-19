@@ -60,8 +60,8 @@ class Variable:
     def __repr__(self) -> str:
         return f"{self.name} {self.values}"
 
-    def hash(self) -> int:
-        return repr(self)
+    def __hash__(self) -> int:
+        return hash(repr(self))
 
     def __eq__(self, other) -> bool:
         return self.name == other.name and self.values == other.values

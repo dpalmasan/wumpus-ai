@@ -5,6 +5,7 @@ from inference.bayesian import (
     Variable,
     enumeration_ask,
 )
+from inference.probability import JointDistribution
 
 e = {
     "j": True,
@@ -123,3 +124,12 @@ e = {
 # Expected result {False: 0.6423123243677238, True: 0.3576876756322762}
 res = enumeration_ask(x, e, bn)
 print(res)
+
+
+v1 = Variable("A", [1, 2, 3])
+v2 = Variable("B", [True, False])
+v3 = Variable("C", ["cat", "dog"])
+
+jpd = JointDistribution([v1, v2])
+for events in jpd.all_events([v1, v3], {v2: True}):
+    print(events)

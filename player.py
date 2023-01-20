@@ -65,10 +65,15 @@ class LogicAIPlayer(Player):
         self._wumpus_world = wumpus_world
         self._fringe = set()
         self._plan = []
-        # self._kb.add(Variable(f"P{pos.x}{pos.y}", is_negated=True) & Variable(f"W{pos.x}{pos.y}", is_negated=True))
         self._kb.add(Variable(f"W{pos.x}{pos.y}", True))
         self._kb.add(Variable(f"P{pos.x}{pos.y}", True))
         self._breeze_stench_rules = wumpus_world._breeze_stench_rules()
+        for y in range(len(self._visited)):
+            for x in range(len(self._visited[y])):
+                for clause in self._breeze_stench_rules["B", Point(x, y)]:
+                    self._kb.add(clause)
+                for clause in self._breeze_stench_rules["S", Point(x, y)]:
+                    self._kb.add(clause)
 
     def _is_adjacent(self, x1, y1, x2, y2) -> bool:
         return (
@@ -80,6 +85,7 @@ class LogicAIPlayer(Player):
             or (x1 + 1 == x2 and y2 == y1)
             or (x1 == x2 and y2 - 1 == y1)
             or (x1 == x2 and y2 + 1 == y1)
+            or (x1 == x2 and y1 == y2)
         )
 
     def _pl_wumpus_agent(self) -> Direction:
@@ -88,16 +94,29 @@ class LogicAIPlayer(Player):
         self._visited[y][x] = True
         self._update_fringe()
 
+        debug = []
         for row in self._visited:
+            debug.append(["0"]*len(row))
+        debug[self.pos.y][self.pos.x] = "x"
+        for row in debug:
             print(row)
-
+            
         if "W" in self._wumpus_world[y][x] or "P" in self._wumpus_world[y][x]:
             raise Exception("YOU DIED!")
         elif "G" in self._wumpus_world[y][x]:
             raise Exception("YOU WON!")
 
         if len(self._plan):
-            yield self._plan.pop(0)
+            action = self._plan.pop(0)
+            if action == "up":
+                action = Direction.UP
+            elif action == "down":
+                action = Direction.DOWN
+            elif action == "left":
+                action = Direction.LEFT
+            else:
+                action = Direction.RIGHT
+            yield action
         else:
             safe_pos = self._get_safe_pos()
             if safe_pos is not None:
@@ -119,38 +138,18 @@ class LogicAIPlayer(Player):
         yield self._random_move()
 
     def _check_if_no_pit(self, i, j) -> bool:
-        kb = DpllKB(self._kb.clauses.copy())
         p = Variable(f"P{i}{j}", is_negated=False, truthyness=None)
-        for y in range(len(self._visited)):
-            for x in range(len(self._visited[y])):
-                if self._visited[y][x]:
-                    for clause in self._breeze_stench_rules["B", Point(x, y)]:
-                        kb.add(clause)
-        for clause in self._breeze_stench_rules["B", Point(i, j)]:
-            kb.add(clause)
-
-        return kb.query(~p)
+        return self._kb.query(~p)
 
     def _check_if_no_wumpus(self, i, j) -> bool:
-        kb = DpllKB(self._kb.clauses.copy())
         w = Variable(f"W{i}{j}", is_negated=False, truthyness=None)
-        kb.add(self._wumpus_world._one_wumpus_rule())
-        kb.add(wumpus_world._at_most_one_wumpus())
-        for y in range(len(self._visited)):
-            for x in range(len(self._visited[y])):
-                if self._visited[y][x]:
-                    for clause in self._breeze_stench_rules["S", Point(x, y)]:
-                        kb.add(clause)
-        for clause in self._breeze_stench_rules["S", Point(i, j)]:
-            kb.add(clause)
-        print(kb.clauses, kb.query(~w), i, j)
-        return kb.query(~w)
+
+        return self._kb.query(~w)
 
 
     def _get_safe_pos(self) -> Optional[Point]:
         print(self._fringe)
         for i, j in self._fringe:
-            input()
             if self._check_if_no_pit(i, j) and self._check_if_no_wumpus(i, j):
                 return Point(i, j)
 
@@ -229,9 +228,3 @@ class HumanPlayer(Player):
 
     def __repr__(self) -> str:
         return f"HumanPlayer({self.pos}"
-
-
-wumpus_world = create_wumpus_world()
-ai_player = LogicAIPlayer(Point(0, 3), wumpus_world)
-while True:
-    ai_player.update()

@@ -5,6 +5,7 @@ from typing import Dict, List
 from pylogic.propositional import (
     Variable,
     Clause,
+    BicondClause
 )
 from utils import Point
 
@@ -96,8 +97,8 @@ class WumpusWorld:
                     lambda x, y: x | y,
                     filter(lambda x: x is not None, [w1, w2, w3, w4]),
                 )
-                clauses["B", Point(i, j)].append(b >> p)
-                clauses["S", Point(i, j)].append(s >> w)
+                clauses["B", Point(i, j)].append(BicondClause(b, p))
+                clauses["S", Point(i, j)].append(BicondClause(s, w))
         return clauses
 
 

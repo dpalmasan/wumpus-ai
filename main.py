@@ -186,8 +186,8 @@ def main():
                 row.append(False)
         seen.append(row)
     wumpus_world = create_wumpus_world()
-    # agent = HumanPlayer(current_pos)
-    agent = LogicAIPlayer(current_pos, wumpus_world, seen)
+    agent = HumanPlayer(current_pos)
+    # agent = LogicAIPlayer(current_pos, wumpus_world, seen)
     tiles = [
         [
             [Property.STENCH],
@@ -222,6 +222,7 @@ def main():
         if (
             Property.GOLD in tiles[agent.pos.y][agent.pos.x]
             or Property.PIT in tiles[agent.pos.y][agent.pos.x]
+            or Property.WUMPUS in tiles[agent.pos.y][agent.pos.x]
         ):
             break
         for event in pygame.event.get():

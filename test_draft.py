@@ -130,6 +130,6 @@ v1 = Variable("A", [1, 2, 3])
 v2 = Variable("B", [True, False])
 v3 = Variable("C", ["cat", "dog"])
 
-jpd = JointDistribution([v1, v2])
+jpd = JointDistribution()
 for events in jpd.all_events([v1, v3], {v2: True}):
     print(events)

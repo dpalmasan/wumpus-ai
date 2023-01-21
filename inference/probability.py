@@ -3,8 +3,9 @@ from inference.bayesian import Variable
 
 
 class JointDistribution:
-    def __init__(self, variables: List[Variable]) -> None:
-        self._variables = variables
+    def __init__(self) -> None:
+        self._vars: List[Variable] = []
+        self._probs = {}
 
     def all_events(
         self, vars: List[Variable], e: Dict[Variable, Union[str, bool, int]]

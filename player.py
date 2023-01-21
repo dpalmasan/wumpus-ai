@@ -2,7 +2,7 @@ from abc import abstractmethod
 from enum import Enum
 import pickle
 import random
-from typing import Optional
+from typing import Optional, Tuple
 from pylogic.propositional import (
     Variable,
     CnfClause,
@@ -12,6 +12,7 @@ from pylogic.propositional import (
     CnfParser,
     to_cnf,
 )
+from inference import probability
 
 import os
 
@@ -96,11 +97,11 @@ class LogicAIPlayer(Player):
 
         debug = []
         for row in self._visited:
-            debug.append(["0"]*len(row))
+            debug.append(["0"] * len(row))
         debug[self.pos.y][self.pos.x] = "x"
         for row in debug:
             print(row)
-            
+
         if "W" in self._wumpus_world[y][x] or "P" in self._wumpus_world[y][x]:
             raise Exception("YOU DIED!")
         elif "G" in self._wumpus_world[y][x]:
@@ -146,9 +147,7 @@ class LogicAIPlayer(Player):
 
         return self._kb.query(~w)
 
-
     def _get_safe_pos(self) -> Optional[Point]:
-        print(self._fringe)
         for i, j in self._fringe:
             if self._check_if_no_pit(i, j) and self._check_if_no_wumpus(i, j):
                 return Point(i, j)
@@ -184,7 +183,7 @@ class LogicAIPlayer(Player):
         if (x, y) in self._fringe:
             self._fringe.remove((x, y))
 
-    def _is_valid_pos(self) -> True:
+    def _is_valid_pos(self) -> bool:
         x, y = self.pos.x, self.pos.y
         return (
             x >= 0
@@ -228,3 +227,160 @@ class HumanPlayer(Player):
 
     def __repr__(self) -> str:
         return f"HumanPlayer({self.pos}"
+
+
+class ProbabilisticAIPlayer(Player):
+    def __init__(self, pos: Point, wumpus_world: WumpusWorld):
+        Player.__init__(self, pos)
+
+        self._visited = []
+        for _ in range(len(wumpus_world._grid)):
+            self._visited.append([False] * len(wumpus_world[0]))
+
+        self._wumpus_world = wumpus_world
+        self._plan = []
+        self._fringe = set()
+        self._evidence_breeze_stench = {}
+        self._known_pit_wumpus = {}
+
+    def _is_valid_pos(self, x, y) -> bool:
+        return (
+            x >= 0
+            and y >= 0
+            and x <= len(self._wumpus_world._grid) - 1
+            and y <= len(self._wumpus_world._grid) - 1
+        )
+
+    def _adjacent_positions(self, x, y):
+        dirs = [(0, 1), (1, 0), (0, -1), (-1, 0)]
+        for x0, y0 in dirs:
+            if self._is_valid_pos(x - x0, y - y0):
+                yield x - x0, y - y0
+
+    def _perceive(self):
+        x, y = self.pos.x, self.pos.y
+        if "S" in self._wumpus_world[y][x] or "B" in self._wumpus_world[y][x]:
+            self._evidence_breeze_stench[(x, y)] = True
+        else:
+            self._known_pit_wumpus[(x, y)] = False
+            self._evidence_breeze_stench[(x, y)] = False
+
+        for xa, ya in self._adjacent_positions(x, y):
+            if not self._visited[ya][xa]:
+                self._fringe.add((xa, ya))
+
+    def _probabilistic_agent(self):
+        x, y = self.pos.x, self.pos.y
+        self._visited[y][x] = True
+        self._perceive()
+        for row in self._visited:
+            print(row)
+        if (x, y) in self._fringe:
+            self._fringe.remove((x, y))
+        if len(self._plan):
+            action = self._plan.pop(0)
+            if action == "up":
+                action = Direction.UP
+            elif action == "down":
+                action = Direction.DOWN
+            elif action == "left":
+                action = Direction.LEFT
+            else:
+                action = Direction.RIGHT
+            yield action
+        else:
+            safe_pos = self._get_safe_pos()
+            if safe_pos is not None:
+                self._plan = a_star_route(
+                    ShortestPathSearchProblem(self.pos, safe_pos, self._visited)
+                )
+
+                action = self._plan.pop(0)
+                if action == "up":
+                    action = Direction.UP
+                elif action == "down":
+                    action = Direction.DOWN
+                elif action == "left":
+                    action = Direction.LEFT
+                else:
+                    action = Direction.RIGHT
+                yield action
+
+    def _has_surrounding_pits_wumpus(self, event, x, y):
+        for xa, ya in self._adjacent_positions(x, y):
+            if (
+                event.get((xa, ya), False)
+                and (xa, ya) not in self._evidence_breeze_stench
+            ):
+                return True
+        return False
+
+    def _consistent(self, event) -> bool:
+        for x, y in self._evidence_breeze_stench:
+            # has breeze or stench but has no surrounding pit or wumpus
+            if self._evidence_breeze_stench[
+                (x, y)
+            ] and not self._has_surrounding_pits_wumpus(event, x, y):
+                return 0
+            # Does not have breeze or stench but has surrounding pit or wumpus
+            if not self._evidence_breeze_stench[
+                (x, y)
+            ] and self._has_surrounding_pits_wumpus(event, x, y):
+                return 0
+        return 1
+
+    def _ask_probability_unsafe(self, x, y) -> float:
+        vars = [
+            probability.Variable(str((xf, yf)), [True, False])
+            for (xf, yf) in self._fringe
+            if (xf, yf) != (x, y)
+        ]
+        jpd = probability.JointDistribution()
+        fringe_prob = 0
+        evidence = {}
+        evidence[(x, y)] = True
+        for event in jpd.all_events(vars, evidence):
+            print(event)
+            prob = 1
+            for (_, val) in event.items():
+                if val:
+                    prob *= 0.2
+                else:
+                    prob *= 0.8
+            if self._consistent(event):
+                fringe_prob += prob
+        return prob
+
+    def _get_safe_pos(self) -> Optional[Point]:
+        risky_prob = 1
+        next_pos = None
+        for x, y in self._fringe:
+            prob = self._ask_probability_unsafe(x, y)
+            print((x, y), prob)
+            if prob < risky_prob:
+                risky_prob = prob
+                next_pos = (x, y)
+        return Point(*next_pos)
+
+    def update(self):
+        action = next(self._probabilistic_agent())
+        pos = self.pos
+        if action == Direction.UP:
+            new_pos = Point(pos.x, pos.y - 1)
+        elif action == Direction.DOWN:
+            new_pos = Point(pos.x, pos.y + 1)
+        elif action == Direction.LEFT:
+            new_pos = Point(pos.x - 1, pos.y)
+        else:
+            new_pos = Point(pos.x + 1, pos.y)
+        self._pos.update(new_pos)
+
+    def __repr__(self) -> str:
+        return f"HumanPlayer({self.pos}"
+
+
+wumpus_world = create_wumpus_world()
+p_agent = ProbabilisticAIPlayer(Point(0, 3), wumpus_world)
+while True:
+    p_agent.update()
+    input()

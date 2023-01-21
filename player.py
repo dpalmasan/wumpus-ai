@@ -16,7 +16,7 @@ from inference import probability
 
 import os
 
-from wumpus import WumpusWorld, create_wumpus_world
+from wumpus import WumpusWorld, create_wumpus_world, create_wumpus_world2
 
 os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "hide"
 import pygame
@@ -94,13 +94,6 @@ class LogicAIPlayer(Player):
         self._perceive()
         self._visited[y][x] = True
         self._update_fringe()
-
-        debug = []
-        for row in self._visited:
-            debug.append(["0"] * len(row))
-        debug[self.pos.y][self.pos.x] = "x"
-        for row in debug:
-            print(row)
 
         if "W" in self._wumpus_world[y][x] or "P" in self._wumpus_world[y][x]:
             raise Exception("YOU DIED!")
@@ -273,10 +266,13 @@ class ProbabilisticAIPlayer(Player):
         x, y = self.pos.x, self.pos.y
         self._visited[y][x] = True
         self._perceive()
-        for row in self._visited:
-            print(row)
         if (x, y) in self._fringe:
             self._fringe.remove((x, y))
+        if "G" in self._wumpus_world[y][x]:
+            raise Exception("YOU WON")
+
+        if "P" in self._wumpus_world[y][x] or "W" in self._wumpus_world[y][x]:
+            raise Exception("YOU DIED")
         if len(self._plan):
             action = self._plan.pop(0)
             if action == "up":
@@ -308,9 +304,9 @@ class ProbabilisticAIPlayer(Player):
 
     def _has_surrounding_pits_wumpus(self, event, x, y):
         for xa, ya in self._adjacent_positions(x, y):
+            var = probability.Variable((xa, ya), [True, False])
             if (
-                event.get((xa, ya), False)
-                and (xa, ya) not in self._evidence_breeze_stench
+                event.get(var, False)
             ):
                 return True
         return False
@@ -321,42 +317,43 @@ class ProbabilisticAIPlayer(Player):
             if self._evidence_breeze_stench[
                 (x, y)
             ] and not self._has_surrounding_pits_wumpus(event, x, y):
-                return 0
+                return False
             # Does not have breeze or stench but has surrounding pit or wumpus
             if not self._evidence_breeze_stench[
                 (x, y)
             ] and self._has_surrounding_pits_wumpus(event, x, y):
-                return 0
-        return 1
+                return False
+        return True
 
     def _ask_probability_unsafe(self, x, y) -> float:
         vars = [
-            probability.Variable(str((xf, yf)), [True, False])
+            probability.Variable((xf, yf), [True, False])
             for (xf, yf) in self._fringe
             if (xf, yf) != (x, y)
         ]
         jpd = probability.JointDistribution()
         fringe_prob = 0
-        evidence = {}
-        evidence[(x, y)] = True
+        unknown = probability.Variable((x, y), [True, False])
+        evidence = {unknown: True}
         for event in jpd.all_events(vars, evidence):
-            print(event)
             prob = 1
-            for (_, val) in event.items():
-                if val:
-                    prob *= 0.2
-                else:
-                    prob *= 0.8
-            if self._consistent(event):
+            for (pos, val) in event.items():
+                if pos != unknown:
+                    if val:
+                        prob *= 0.2
+                    else:
+                        prob *= 0.8
+            event_ = event.copy()
+            event_.update(evidence)
+            if self._consistent(event_):
                 fringe_prob += prob
-        return prob
+        return fringe_prob
 
     def _get_safe_pos(self) -> Optional[Point]:
-        risky_prob = 1
+        risky_prob = 2
         next_pos = None
         for x, y in self._fringe:
             prob = self._ask_probability_unsafe(x, y)
-            print((x, y), prob)
             if prob < risky_prob:
                 risky_prob = prob
                 next_pos = (x, y)
@@ -377,10 +374,3 @@ class ProbabilisticAIPlayer(Player):
 
     def __repr__(self) -> str:
         return f"HumanPlayer({self.pos}"
-
-
-wumpus_world = create_wumpus_world()
-p_agent = ProbabilisticAIPlayer(Point(0, 3), wumpus_world)
-while True:
-    p_agent.update()
-    input()

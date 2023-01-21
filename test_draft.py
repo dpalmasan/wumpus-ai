@@ -6,6 +6,9 @@ from inference.bayesian import (
     enumeration_ask,
 )
 from inference.probability import JointDistribution
+from player import ProbabilisticAIPlayer
+from utils import Point
+from wumpus import create_wumpus_world, create_wumpus_world2
 
 e = {
     "j": True,
@@ -57,7 +60,12 @@ bn = BayesianNetwork(
     [
         BayesianNetworkNode(
             Variable("c", [False, True]),
-            ConditionalProbabilityTable({(True,): 0.8,}, ("c",)),
+            ConditionalProbabilityTable(
+                {
+                    (True,): 0.8,
+                },
+                ("c",),
+            ),
         ),
         BayesianNetworkNode(
             Variable("r", [False, True]),
@@ -133,3 +141,11 @@ v3 = Variable("C", ["cat", "dog"])
 jpd = JointDistribution()
 for events in jpd.all_events([v1, v3], {v2: True}):
     print(events)
+
+
+wumpus_world = create_wumpus_world()
+wumpus_world = create_wumpus_world2()
+p_agent = ProbabilisticAIPlayer(Point(0, 3), wumpus_world)
+while True:
+    p_agent.update()
+    input()

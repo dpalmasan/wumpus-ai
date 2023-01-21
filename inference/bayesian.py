@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 
 class InvalidCPTException(Exception):
@@ -45,7 +45,7 @@ class ConditionalProbabilityTable:
 
 
 class Variable:
-    def __init__(self, name: str, values: List[Any]) -> None:
+    def __init__(self, name: Union[str, int, Tuple], values: List[Any]) -> None:
         self._name = name
         self._values = sorted(values)
 

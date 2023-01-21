@@ -16,8 +16,8 @@ from consts import (
     Property,
 )
 from utils import Point
-from player import HumanPlayer, LogicAIPlayer
-from wumpus import WumpusWorld, create_wumpus_world
+from player import HumanPlayer, LogicAIPlayer, ProbabilisticAIPlayer
+from wumpus import WumpusWorld, create_wumpus_world, create_wumpus_world2
 
 
 breeze = pygame.transform.scale(
@@ -185,9 +185,10 @@ def main():
             else:
                 row.append(False)
         seen.append(row)
-    wumpus_world = create_wumpus_world()
+    wumpus_world = create_wumpus_world2()
     agent = HumanPlayer(current_pos)
-    # agent = LogicAIPlayer(current_pos, wumpus_world, seen)
+    agent = LogicAIPlayer(current_pos, wumpus_world, seen)
+    agent = ProbabilisticAIPlayer(current_pos, wumpus_world)
 
     map = Map.from_list(wumpus_world)
     rect = player.get_rect()

@@ -117,9 +117,9 @@ def create_wumpus_world():
 def create_wumpus_world2():
     return WumpusWorld(
         [
-            [set(Property.GOLD), set(), set(), set()],
-            [set(), set(), set(Property.BREEZE), set(Property.PIT)],
-            [set(Property.STENCH), set(Property.WUMPUS), set(), set(Property.Pit)],
-            [set(), set(Property.STENCH), set(), set(Property.BREEZE)],
+            [set([Property.GOLD]), set(), set(), set()],
+            [set(), set(), set([Property.BREEZE]), set([Property.PIT])],
+            [set([Property.STENCH]), set([Property.WUMPUS]), set(), set([Property.PIT])],
+            [set(), set([Property.STENCH]), set(), set([Property.BREEZE])],
         ]
     )

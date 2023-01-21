@@ -3,6 +3,7 @@ from enum import Enum
 import pickle
 import random
 from typing import Optional, Tuple
+from consts import Property
 from pylogic.propositional import (
     Variable,
     CnfClause,
@@ -252,7 +253,7 @@ class ProbabilisticAIPlayer(Player):
 
     def _perceive(self):
         x, y = self.pos.x, self.pos.y
-        if "S" in self._wumpus_world[y][x] or "B" in self._wumpus_world[y][x]:
+        if Property.STENCH in self._wumpus_world[y][x] or Property.BREEZE in self._wumpus_world[y][x]:
             self._evidence_breeze_stench[(x, y)] = True
         else:
             self._known_pit_wumpus[(x, y)] = False
@@ -268,11 +269,6 @@ class ProbabilisticAIPlayer(Player):
         self._perceive()
         if (x, y) in self._fringe:
             self._fringe.remove((x, y))
-        if "G" in self._wumpus_world[y][x]:
-            raise Exception("YOU WON")
-
-        if "P" in self._wumpus_world[y][x] or "W" in self._wumpus_world[y][x]:
-            raise Exception("YOU DIED")
         if len(self._plan):
             action = self._plan.pop(0)
             if action == "up":

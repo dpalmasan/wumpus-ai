@@ -149,11 +149,11 @@ def draw_visible_cells(canvas, seen):
                 pygame.draw.rect(canvas, BLACK, rect)
 
 
-def process_human_input(event, pos, agent, tiles):
+def process_human_input(event, pos, agent, tiles: WumpusWorld):
     if event.type == pygame.KEYDOWN:
         updated = False
         if event.key == pygame.K_DOWN:
-            new_pos = Point(pos.x, min(pos.y + 1, len(tiles) - 1))
+            new_pos = Point(pos.x, min(pos.y + 1, len(tiles._grid) - 1))
             updated = True
         elif event.key == pygame.K_UP:
             new_pos = Point(pos.x, max(pos.y - 1, 0))
@@ -162,7 +162,7 @@ def process_human_input(event, pos, agent, tiles):
             new_pos = Point(max(pos.x - 1, 0), pos.y)
             updated = True
         elif event.key == pygame.K_RIGHT:
-            new_pos = Point(min(pos.x + 1, len(tiles) - 1), pos.y)
+            new_pos = Point(min(pos.x + 1, len(tiles._grid) - 1), pos.y)
             updated = True
         if updated:
             agent.update(new_pos)
@@ -188,26 +188,8 @@ def main():
     wumpus_world = create_wumpus_world()
     agent = HumanPlayer(current_pos)
     # agent = LogicAIPlayer(current_pos, wumpus_world, seen)
-    tiles = [
-        [
-            [Property.STENCH],
-            [],
-            [Property.BREEZE],
-            [
-                Property.PIT,
-            ],
-        ],
-        [
-            [Property.WUMPUS],
-            [Property.BREEZE, Property.STENCH, Property.GOLD],
-            [Property.PIT],
-            [Property.BREEZE],
-        ],
-        [[Property.STENCH], [], [Property.BREEZE], []],
-        [[Property.PLAYER], [Property.BREEZE], [Property.PIT], [Property.BREEZE]],
-    ]
 
-    map = Map.from_list(tiles)
+    map = Map.from_list(wumpus_world)
     rect = player.get_rect()
     rect.center = (
         rect.center[0] + OFFSET + agent.pos.x * BLOCK_SIZE,
@@ -220,9 +202,9 @@ def main():
     while True:
 
         if (
-            Property.GOLD in tiles[agent.pos.y][agent.pos.x]
-            or Property.PIT in tiles[agent.pos.y][agent.pos.x]
-            or Property.WUMPUS in tiles[agent.pos.y][agent.pos.x]
+            Property.GOLD in wumpus_world[agent.pos.y][agent.pos.x]
+            or Property.PIT in wumpus_world[agent.pos.y][agent.pos.x]
+            or Property.WUMPUS in wumpus_world[agent.pos.y][agent.pos.x]
         ):
             break
         for event in pygame.event.get():
@@ -232,7 +214,7 @@ def main():
 
             pos = agent.pos
             if isinstance(agent, HumanPlayer):
-                process_human_input(event, pos, agent, tiles)
+                process_human_input(event, pos, agent, wumpus_world)
             else:
                 if event.type == pygame.KEYDOWN:
                     agent.update()
@@ -242,10 +224,10 @@ def main():
         new_pos = agent.pos
         if current_pos != agent.pos:
             seen[new_pos.y][new_pos.x] = True
-            if tiles[current_pos.y][current_pos.x]:
-                tiles[current_pos.y][current_pos.x].pop()
+            if wumpus_world[current_pos.y][current_pos.x]:
+                wumpus_world[current_pos.y][current_pos.x].remove(Property.PLAYER)
 
-            tiles[new_pos.y][new_pos.x].append(Property.PLAYER)
+            wumpus_world[new_pos.y][new_pos.x].add(Property.PLAYER)
 
         SCREEN.fill(WHITE)
         rect = player.get_rect()
@@ -280,7 +262,7 @@ def main():
         draw_visible_cells(SCREEN, seen)
         draw_background(SCREEN, map.get_tiles_coords())
         Pan3.add_rect(SCREEN)
-        if Property.GOLD in tiles[agent.pos.y][agent.pos.x]:
+        if Property.GOLD in wumpus_world[agent.pos.y][agent.pos.x]:
             Pan3.add_text(SCREEN, "You won")
         else:
             Pan3.add_text(SCREEN, "You lost")

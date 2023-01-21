@@ -2,6 +2,7 @@ from ast import Tuple
 from collections import defaultdict
 from functools import reduce
 from typing import Dict, List
+from consts import Property
 from pylogic.propositional import (
     Variable,
     Clause,
@@ -105,9 +106,20 @@ class WumpusWorld:
 def create_wumpus_world():
     return WumpusWorld(
         [
-            [set("S"), set(), set("B"), set("P")],
-            [set("W"), set(["B", "S", "G"]), set("P"), set("B")],
-            [set("S"), set(), set("B"), set()],
-            [set(), set("B"), set("P"), set("B")],
+            [set([Property.STENCH]), set(), set([Property.BREEZE]), set([Property.PIT])],
+            [set([Property.WUMPUS]), set([Property.BREEZE, Property.STENCH, Property.GOLD]), set([Property.PIT]), set([Property.BREEZE])],
+            [set([Property.STENCH]), set(), set([Property.BREEZE]), set()],
+            [set(), set([Property.BREEZE]), set([Property.PIT]), set([Property.BREEZE])],
+        ]
+    )
+
+
+def create_wumpus_world2():
+    return WumpusWorld(
+        [
+            [set(Property.GOLD), set(), set(), set()],
+            [set(), set(), set(Property.BREEZE), set(Property.PIT)],
+            [set(Property.STENCH), set(Property.WUMPUS), set(), set(Property.Pit)],
+            [set(), set(Property.STENCH), set(), set(Property.BREEZE)],
         ]
     )

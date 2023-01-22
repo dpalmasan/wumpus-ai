@@ -1,6 +1,7 @@
 from ast import Tuple
 from collections import defaultdict
 from functools import reduce
+from random import random, randrange
 from typing import Dict, List
 from consts import Property
 from pylogic.propositional import (
@@ -9,6 +10,9 @@ from pylogic.propositional import (
     BicondClause
 )
 from utils import Point
+
+MAX_TRAPS_RATIO = 0.2
+TRAPS_GOLD_INCIDENCE_RATE = 0.15
 
 
 class WumpusWorld:
@@ -51,7 +55,7 @@ class WumpusWorld:
                         Variable(f"W{i}{j}", is_negated=True, truthyness=None)
                         | Variable(f"W{i}{j - 1}", is_negated=True, truthyness=None)
                     )
-   
+
                 if j < map_height - 1:
                     if j > 0:
                         clauses.append(
@@ -103,7 +107,54 @@ class WumpusWorld:
         return clauses
 
 
-def create_wumpus_world():
+def create_wumpus_world(map_width=4, map_height=4):
+    grid = [[set() for i in map_width] for j in map_height]
+    # can write a function for this type of random coord generation (nothing should be on 0,0)
+    wumpus_location = randrange(1, map_width * map_height)
+    wumpus_y = int(wumpus_location / map_width)
+    wumpus_x = wumpus_location - (wumpus_y * map_width)
+    grid[wumpus_y][wumpus_x].add(set([Property.WUMPUS]))
+    # can maybe use breeze stench rules to simplify this? or abstract into a function
+    if wumpus_x > 0:
+        if wumpus_y > 0:
+            grid[wumpus_y - 1][wumpus_x - 1].add([Property.STENCH])
+        if wumpus_y < map_height - 1:
+            grid[wumpus_y + 1][wumpus_x - 1].add([Property.STENCH])
+    if wumpus_x < map_width - 1:
+        if wumpus_y > 0:
+            grid[wumpus_y - 1][wumpus_x + 1].add([Property.STENCH])
+        if wumpus_y < map_height - 1:
+            grid[wumpus_y + 1][wumpus_x + 1].add([Property.STENCH])
+
+    max_traps_threshold = int(map_width * map_height * MAX_TRAPS_RATIO)
+    trap_locations = []
+    for i in range (map_width * map_height):
+        y = int(i / map_width)
+        x = i - (y * map_width)
+        if random(1) > TRAPS_GOLD_INCIDENCE_RATE: # tied to same rate for simplicity
+            grid[y][x].add([Property.GOLD])
+        if random(1) > TRAPS_GOLD_INCIDENCE_RATE and len(trap_locations) < max_traps_threshold:
+            grid[y][x].add([Property.PIT])
+            trap_locations.append([x, y])
+
+    for loc in trap_locations:
+        trap_x, trap_y = loc[0], loc[1]
+        if trap_x > 0:
+            if trap_y > 0:
+                grid[trap_y - 1][trap_x - 1].add([Property.STENCH])
+            if wumpus_y < map_height - 1:
+                grid[trap_y + 1][trap_x - 1].add([Property.STENCH])
+        if trap_x < map_width - 1:
+            if wumpus_y > 0:
+                grid[trap_y - 1][trap_x + 1].add([Property.STENCH])
+            if wumpus_y < map_height - 1:
+                grid[trap_y + 1][trap_x + 1].add([Property.STENCH])
+
+    return WumpusWorld(grid)
+
+
+
+def create_wumpus_world1():
     return WumpusWorld(
         [
             [set([Property.STENCH]), set(), set([Property.BREEZE]), set([Property.PIT])],

@@ -1,7 +1,7 @@
 from ast import Tuple
 from collections import defaultdict
 from functools import reduce
-from random import random, randrange
+from random import random, choice
 from typing import Dict, List
 from consts import Property
 from pylogic.propositional import (
@@ -107,51 +107,78 @@ class WumpusWorld:
         return clauses
 
 
-def create_wumpus_world(map_width=4, map_height=4):
-    grid = [[set() for i in map_width] for j in map_height]
-    # can write a function for this type of random coord generation (nothing should be on 0,0)
-    wumpus_location = randrange(1, map_width * map_height)
-    wumpus_y = int(wumpus_location / map_width)
-    wumpus_x = wumpus_location - (wumpus_y * map_width)
-    grid[wumpus_y][wumpus_x].add(set([Property.WUMPUS]))
-    # can maybe use breeze stench rules to simplify this? or abstract into a function
-    if wumpus_x > 0:
-        if wumpus_y > 0:
-            grid[wumpus_y - 1][wumpus_x - 1].add([Property.STENCH])
-        if wumpus_y < map_height - 1:
-            grid[wumpus_y + 1][wumpus_x - 1].add([Property.STENCH])
-    if wumpus_x < map_width - 1:
-        if wumpus_y > 0:
-            grid[wumpus_y - 1][wumpus_x + 1].add([Property.STENCH])
-        if wumpus_y < map_height - 1:
-            grid[wumpus_y + 1][wumpus_x + 1].add([Property.STENCH])
+class WumpusWorldGenerator:
+    def __init__(self, map_width=4, map_height=4):
+        self._map_width = map_width
+        self._map_height = map_height
+        self._generate_random_wumpus()
 
-    max_traps_threshold = int(map_width * map_height * MAX_TRAPS_RATIO)
-    trap_locations = []
-    for i in range (map_width * map_height):
-        y = int(i / map_width)
-        x = i - (y * map_width)
-        if random(1) > TRAPS_GOLD_INCIDENCE_RATE: # tied to same rate for simplicity
-            grid[y][x].add([Property.GOLD])
-        if random(1) > TRAPS_GOLD_INCIDENCE_RATE and len(trap_locations) < max_traps_threshold:
-            grid[y][x].add([Property.PIT])
-            trap_locations.append([x, y])
 
-    for loc in trap_locations:
-        trap_x, trap_y = loc[0], loc[1]
-        if trap_x > 0:
-            if trap_y > 0:
-                grid[trap_y - 1][trap_x - 1].add([Property.STENCH])
-            if wumpus_y < map_height - 1:
-                grid[trap_y + 1][trap_x - 1].add([Property.STENCH])
-        if trap_x < map_width - 1:
-            if wumpus_y > 0:
-                grid[trap_y - 1][trap_x + 1].add([Property.STENCH])
-            if wumpus_y < map_height - 1:
-                grid[trap_y + 1][trap_x + 1].add([Property.STENCH])
+    def _spawn_object(self, exclusions=None):
+        grid_size = self._map_width * self._map_height
+        acceptable_range = range(1, grid_size) # Nothing should be on 0,0
+        if exclusions:
+            [acceptable_range.remove(exclusion) for exclusion in exclusions]
+        object_location = choice(acceptable_range)
+        y = int(object_location / self._map_width)
+        x = object_location - (y * self._map_width)
+        return(x, y)
 
-    return WumpusWorld(grid)
 
+    def _adjacent_cords(self, x, y):
+        dirs = [(0, 1), (1, 0), (0, -1), (-1, 0)]
+        for dx, dy in dirs:
+            xnew, ynew = x - dx, y - dx
+            if self._valid_coord(xnew, ynew):
+                yield xnew, ynew
+
+
+    def _valid_coord(self, x, y) -> bool:
+        return (x >= 0 and x < self._map_width and y >= 0 and y < self._map_height)
+
+
+    @property
+    def _traps_gold_incidence_rate(self):
+        return TRAPS_GOLD_INCIDENCE_RATE
+
+
+    @property
+    def _max_traps_ratio(self):
+        return MAX_TRAPS_RATIO
+
+
+    def _generate_random_wumpus():
+        grid = [[set() for i in self._map_width] for j in self._map_height]
+        wumpus_x, wumpus_y = self._spawn_object()
+        grid[wumpus_y][wumpus_x].add(set([Property.WUMPUS]))
+        adjacent_coords = self._adjacent_cords(wumpus_x, wumpus_y)
+        for coord in adjacent_coords:
+            x, y = coord[0], coord[1]
+            grid[y][x].add([Property.STENCH])
+
+        max_traps_threshold = int(map_width * self._map_height * self._max_traps_ratio)
+        num_traps = min(self._max_traps_ratio, sum(random(1) > self._traps_gold_incidence_rate for i in range self._map_width * self._map_height))
+        num_gold = sum(random(1) > self._traps_gold_incidence_rate for i in range self._map_width * self._map_height)
+
+        for _ in range(num_gold):
+            gold_x, gold_y = self._spawn_object()
+            grid[gold_y][gold_x].add([Property.PIT])
+
+        trap_locations = []
+        for _ in range(num_traps):
+            trap_x, trap_y = self._spawn_object()
+            grid[trap_y][trap_x].add([Property.PIT])
+            trap_locations.append([trap_x, trap_y])
+
+
+        for loc in trap_locations:
+            trap_x, trap_y = loc[0], loc[1]
+            adjacent_coords = self._adjacent_cords(trap_x, trap_y)
+            for coord in adjacent_coords:
+                x, y = coord[0], coord[1]
+                grid[y][x].add([Property.BREEZE])
+
+        self.world = WumpusWorld(grid)
 
 
 def create_wumpus_world1():

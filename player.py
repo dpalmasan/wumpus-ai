@@ -17,7 +17,7 @@ from inference import probability
 
 import os
 
-from wumpus import WumpusWorld, create_wumpus_world, create_wumpus_world2
+from wumpus import WumpusWorld, create_wumpus_world1, create_wumpus_world2
 
 os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "hide"
 import pygame

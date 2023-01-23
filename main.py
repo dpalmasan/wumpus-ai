@@ -185,9 +185,10 @@ def main():
             else:
                 row.append(False)
         seen.append(row)
-    wumpus_world = create_wumpus_world2()
-    agent = HumanPlayer(current_pos)
-    agent = LogicAIPlayer(current_pos, wumpus_world, seen)
+    wumpus_world = create_wumpus_world()
+    # wumpus_world = create_wumpus_world2()
+    # agent = HumanPlayer(current_pos)
+    # agent = LogicAIPlayer(current_pos, wumpus_world, seen)
     agent = ProbabilisticAIPlayer(current_pos, wumpus_world)
 
     map = Map.from_list(wumpus_world)

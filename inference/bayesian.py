@@ -58,7 +58,7 @@ class Variable:
         return self._values
 
     def __repr__(self) -> str:
-        return f"{self.name} {self.values}"
+        return f"{self.name}"
 
     def __hash__(self) -> int:
         return hash(repr(self))

@@ -134,12 +134,16 @@ res = enumeration_ask(x, e, bn)
 print(res)
 
 
-v1 = Variable("A", [1, 2, 3])
+v1 = Variable("N", [1, 2, 3])
 v2 = Variable("B", [True, False])
-v3 = Variable("C", ["cat", "dog"])
+v3 = Variable("A", ["cat", "dog"])
 
 jpd = JointDistribution()
-for events in jpd.all_events([v1, v3], {v2: True}):
+for events in jpd.all_events([v1, v2], {v3: "dog"}):
+    print(events)
+
+print("="*79)
+for events in jpd.all_events([v1, v3, v2], {}):
     print(events)
 
 

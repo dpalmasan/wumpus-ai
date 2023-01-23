@@ -120,7 +120,7 @@ class WumpusWorldGenerator:
         acceptable_range = range(grid_size) # Nothing should be on 0,0
         if len(self._occupied_spaces) > 0:
             [acceptable_range.remove(exclusion) for exclusion in self._occupied_spaces]
-            # this can technically break if we change max_traps_ratio
+            # this can technically break if we change max_traps_ratio or too much gold spawns
         object_location = choice(acceptable_range)
         self._occupied_spaces.append(object_location)
         y = int(object_location / self._map_width)
@@ -179,15 +179,17 @@ class WumpusWorldGenerator:
             for _ in range(self._map_width * self._map_height)
         )
 
-        for _ in range(num_gold):
-            gold_x, gold_y = self._spawn_object_coords()
-            grid[gold_y][gold_x].add(Property.GOLD)
-
         trap_locations = []
         for _ in range(num_traps):
             trap_x, trap_y = self._spawn_object_coords()
             grid[trap_y][trap_x].add(Property.PIT)
             trap_locations.append([trap_x, trap_y])
+
+        for _ in range(num_gold):
+            if len(self._occupied_spaces) == self._map_width * self._map_height:
+                break
+            gold_x, gold_y = self._spawn_object_coords()
+            grid[gold_y][gold_x].add(Property.GOLD)
 
         for loc in trap_locations:
             trap_x, trap_y = loc[0], loc[1]

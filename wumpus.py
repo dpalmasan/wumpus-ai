@@ -147,36 +147,50 @@ class WumpusWorldGenerator:
         return MAX_TRAPS_RATIO
 
 
-    def _generate_random_wumpus():
-        grid = [[set() for i in self._map_width] for j in self._map_height]
+    def _generate_random_wumpus(self):
+        grid = [
+            [set() for _ in range(self._map_width)] for _ in range(self._map_height)
+        ]
         wumpus_x, wumpus_y = self._spawn_object()
-        grid[wumpus_y][wumpus_x].add(set([Property.WUMPUS]))
+        grid[wumpus_y][wumpus_x].add(Property.WUMPUS)
         adjacent_coords = self._adjacent_cords(wumpus_x, wumpus_y)
         for coord in adjacent_coords:
             x, y = coord[0], coord[1]
-            grid[y][x].add([Property.STENCH])
+            grid[y][x].add(Property.STENCH)
 
-        max_traps_threshold = int(map_width * self._map_height * self._max_traps_ratio)
-        num_traps = min(self._max_traps_ratio, sum(random(1) > self._traps_gold_incidence_rate for i in range self._map_width * self._map_height))
-        num_gold = sum(random(1) > self._traps_gold_incidence_rate for i in range self._map_width * self._map_height)
+        max_traps_threshold = int(
+            self._map_width * self._map_height * self._max_traps_ratio
+        )
+        num_traps = int(
+            min(
+                self._max_traps_ratio,
+                sum(
+                    random() > self._traps_gold_incidence_rate
+                    for _ in range(self._map_width * self._map_height)
+                ),
+            )
+        )
+        num_gold = sum(
+            random() > self._traps_gold_incidence_rate
+            for _ in range(self._map_width * self._map_height)
+        )
 
         for _ in range(num_gold):
             gold_x, gold_y = self._spawn_object()
-            grid[gold_y][gold_x].add([Property.PIT])
+            grid[gold_y][gold_x].add(Property.PIT)
 
         trap_locations = []
         for _ in range(num_traps):
             trap_x, trap_y = self._spawn_object()
-            grid[trap_y][trap_x].add([Property.PIT])
+            grid[trap_y][trap_x].add(Property.PIT)
             trap_locations.append([trap_x, trap_y])
-
 
         for loc in trap_locations:
             trap_x, trap_y = loc[0], loc[1]
             adjacent_coords = self._adjacent_cords(trap_x, trap_y)
             for coord in adjacent_coords:
                 x, y = coord[0], coord[1]
-                grid[y][x].add([Property.BREEZE])
+                grid[y][x].add(Property.BREEZE)
 
         self.world = WumpusWorld(grid)
 

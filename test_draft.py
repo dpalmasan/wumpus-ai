@@ -8,7 +8,7 @@ from inference.bayesian import (
 from inference.probability import JointDistribution
 from player import ProbabilisticAIPlayer
 from utils import Point
-from wumpus import create_wumpus_world1, create_wumpus_world2
+from wumpus import create_wumpus_world1, create_wumpus_world2, WumpusWorldGenerator
 
 e = {
     "j": True,
@@ -146,6 +146,8 @@ for events in jpd.all_events([v1, v3], {v2: True}):
 wumpus_world = create_wumpus_world1()
 wumpus_world = create_wumpus_world2()
 wumpus_world = WumpusWorldGenerator().world
+for row in wumpus_world._grid:
+    print(row)
 p_agent = ProbabilisticAIPlayer(Point(0, 3), wumpus_world)
 while True:
     p_agent.update()

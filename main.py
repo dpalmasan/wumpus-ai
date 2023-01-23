@@ -17,7 +17,12 @@ from consts import (
 )
 from utils import Point
 from player import HumanPlayer, LogicAIPlayer, ProbabilisticAIPlayer
-from wumpus import WumpusWorld, create_wumpus_world1, create_wumpus_world2
+from wumpus import (
+    WumpusWorld,
+    create_wumpus_world1,
+    create_wumpus_world2,
+    WumpusWorldGenerator,
+)
 
 
 breeze = pygame.transform.scale(

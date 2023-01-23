@@ -128,10 +128,10 @@ class WumpusWorldGenerator:
         return(x, y)
 
 
-    def _adjacent_cords(self, x, y):
+    def _adjacent_coords(self, x, y):
         dirs = [(0, 1), (1, 0), (0, -1), (-1, 0)]
         for dx, dy in dirs:
-            xnew, ynew = x - dx, y - dx
+            xnew, ynew = x - dx, y - dy
             if self._valid_coord(xnew, ynew):
                 yield xnew, ynew
 
@@ -157,8 +157,7 @@ class WumpusWorldGenerator:
         self._occupied_spaces.append(0) # player spawns here
         wumpus_x, wumpus_y = self._spawn_object_coords()
         grid[wumpus_y][wumpus_x].add(Property.WUMPUS)
-        adjacent_coords = self._adjacent_cords(wumpus_x, wumpus_y)
-        for coord in adjacent_coords:
+        for coord in self._adjacent_coords(wumpus_x, wumpus_y):
             x, y = coord[0], coord[1]
             grid[y][x].add(Property.STENCH)
 
@@ -193,8 +192,7 @@ class WumpusWorldGenerator:
 
         for loc in trap_locations:
             trap_x, trap_y = loc[0], loc[1]
-            adjacent_coords = self._adjacent_cords(trap_x, trap_y)
-            for coord in adjacent_coords:
+            for coord in self._adjacent_coords(trap_x, trap_y):
                 x, y = coord[0], coord[1]
                 grid[y][x].add(Property.BREEZE)
 

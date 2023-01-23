@@ -111,15 +111,18 @@ class WumpusWorldGenerator:
     def __init__(self, map_width=4, map_height=4):
         self._map_width = map_width
         self._map_height = map_height
+        self._occupied_spaces = []
         self._generate_random_wumpus()
 
 
-    def _spawn_object(self, exclusions=None):
+    def _spawn_object_coords(self):
         grid_size = self._map_width * self._map_height
-        acceptable_range = range(1, grid_size) # Nothing should be on 0,0
-        if exclusions:
-            [acceptable_range.remove(exclusion) for exclusion in exclusions]
+        acceptable_range = range(grid_size) # Nothing should be on 0,0
+        if len(self._occupied_spaces) > 0:
+            [acceptable_range.remove(exclusion) for exclusion in self._occupied_spaces]
+            # this can technically break if we change max_traps_ratio
         object_location = choice(acceptable_range)
+        self._occupied_spaces.append(object_location)
         y = int(object_location / self._map_width)
         x = object_location - (y * self._map_width)
         return(x, y)
@@ -151,7 +154,8 @@ class WumpusWorldGenerator:
         grid = [
             [set() for _ in range(self._map_width)] for _ in range(self._map_height)
         ]
-        wumpus_x, wumpus_y = self._spawn_object()
+        self._occupied_spaces.append(0) # player spawns here
+        wumpus_x, wumpus_y = self._spawn_object_coords()
         grid[wumpus_y][wumpus_x].add(Property.WUMPUS)
         adjacent_coords = self._adjacent_cords(wumpus_x, wumpus_y)
         for coord in adjacent_coords:
@@ -176,12 +180,12 @@ class WumpusWorldGenerator:
         )
 
         for _ in range(num_gold):
-            gold_x, gold_y = self._spawn_object()
-            grid[gold_y][gold_x].add(Property.PIT)
+            gold_x, gold_y = self._spawn_object_coords()
+            grid[gold_y][gold_x].add(Property.GOLD)
 
         trap_locations = []
         for _ in range(num_traps):
-            trap_x, trap_y = self._spawn_object()
+            trap_x, trap_y = self._spawn_object_coords()
             grid[trap_y][trap_x].add(Property.PIT)
             trap_locations.append([trap_x, trap_y])
 

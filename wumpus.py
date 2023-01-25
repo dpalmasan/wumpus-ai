@@ -117,10 +117,9 @@ class WumpusWorldGenerator:
 
     def _spawn_object_coords(self):
         grid_size = self._map_width * self._map_height
-        acceptable_range = list(range(grid_size)) # Nothing should be on 0,0
-        if len(self._occupied_spaces) > 0:
-            [acceptable_range.remove(exclusion) for exclusion in self._occupied_spaces]
-            # this can technically break if we change max_traps_ratio or too much gold spawns
+        max_range = list(range(grid_size)) # Nothing should be on 0,0
+        acceptable_range = list(set(max_range) - set(self._occupied_spaces))
+        # this can technically break if we change max_traps_ratio and no spots are left
         object_location = choice(acceptable_range)
         self._occupied_spaces.append(object_location)
         y = int(object_location / self._map_width)

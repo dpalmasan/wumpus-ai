@@ -180,9 +180,8 @@ class WumpusWorldGenerator:
             grid[trap_y][trap_x].add(Property.PIT)
             trap_locations.append([trap_x, trap_y])
 
-        if len(self._occupied_spaces) < self._map_width * self._map_height:
-            gold_x, gold_y = self._spawn_object_coords()
-            grid[gold_y][gold_x].add(Property.GOLD)
+        gold_x, gold_y = self._spawn_object_coords()
+        grid[gold_y][gold_x].add(Property.GOLD)
 
         for loc in trap_locations:
             trap_x, trap_y = loc[0], loc[1]

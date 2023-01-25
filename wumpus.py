@@ -165,7 +165,7 @@ class WumpusWorldGenerator:
         )
         num_traps = int(
             min(
-                self._max_traps_ratio,
+                max_traps_threshold,
                 sum(
                     random() > self._traps_incidence_rate
                     for _ in range(self._map_width * self._map_height)

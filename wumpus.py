@@ -12,7 +12,7 @@ from pylogic.propositional import (
 from utils import Point
 
 MAX_TRAPS_RATIO = 0.2
-TRAPS_GOLD_INCIDENCE_RATE = 0.15
+TRAPS_INCIDENCE_RATE = 0.15
 
 
 class WumpusWorld:
@@ -117,7 +117,7 @@ class WumpusWorldGenerator:
 
     def _spawn_object_coords(self):
         grid_size = self._map_width * self._map_height
-        acceptable_range = range(grid_size) # Nothing should be on 0,0
+        acceptable_range = list(range(grid_size)) # Nothing should be on 0,0
         if len(self._occupied_spaces) > 0:
             [acceptable_range.remove(exclusion) for exclusion in self._occupied_spaces]
             # this can technically break if we change max_traps_ratio or too much gold spawns
@@ -141,8 +141,8 @@ class WumpusWorldGenerator:
 
 
     @property
-    def _traps_gold_incidence_rate(self):
-        return TRAPS_GOLD_INCIDENCE_RATE
+    def _traps_incidence_rate(self):
+        return TRAPS_INCIDENCE_RATE
 
 
     @property
@@ -168,14 +168,10 @@ class WumpusWorldGenerator:
             min(
                 self._max_traps_ratio,
                 sum(
-                    random() > self._traps_gold_incidence_rate
+                    random() > self._traps_incidence_rate
                     for _ in range(self._map_width * self._map_height)
                 ),
             )
-        )
-        num_gold = sum(
-            random() > self._traps_gold_incidence_rate
-            for _ in range(self._map_width * self._map_height)
         )
 
         trap_locations = []
@@ -184,9 +180,7 @@ class WumpusWorldGenerator:
             grid[trap_y][trap_x].add(Property.PIT)
             trap_locations.append([trap_x, trap_y])
 
-        for _ in range(num_gold):
-            if len(self._occupied_spaces) == self._map_width * self._map_height:
-                break
+        if len(self._occupied_spaces) < self._map_width * self._map_height:
             gold_x, gold_y = self._spawn_object_coords()
             grid[gold_y][gold_x].add(Property.GOLD)
 
